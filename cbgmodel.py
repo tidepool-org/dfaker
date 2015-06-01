@@ -9,6 +9,9 @@ import sys
 import cbg_equation
 import statsmodels.api as sm
 
+import random
+import numpy as np 
+
 params = {
 	'year' : 2015, #default datetime settings
 	'month' : 1,
@@ -18,7 +21,8 @@ params = {
 	'zone' : 'US/Pacific', #default zone
 	'num_days' : 30, #default days to generate data for
 	'file' : 'device-data.json', #default json file name 
-	'minify' : False #compact storage option false by default 
+	'minify' : False, #compact storage option false by default 
+	'gaps' : False #randomized gaps in data, off by default 
 }
 
 def parse(args, params):
@@ -70,6 +74,9 @@ def parse(args, params):
 	if args.minify:
 		params['minify'] = True
 
+	if args.gaps:
+		params['gaps'] = True
+
 def get_offset(params):
 	utc_tz = timezone('UTC')
 	local_tz = timezone(params['zone'])
@@ -85,10 +92,9 @@ parser.add_argument('-nd', '--num_days', dest='num_days',
 					help='Number of days to generate data. Default = 180')
 parser.add_argument('-f', '--output_file', dest='file', help='Name of output json file')
 parser.add_argument('-m', '--minify', dest='minify', action='store_true', help='Minify the json file')
-
+parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='add gaps to fake data')
 args = parser.parse_args()
 parse(args, params)
-
 
 def apply_loess(params):
 	"""Solves the blood glucose equation over specified period of days 
@@ -103,9 +109,23 @@ def apply_loess(params):
 	smoothing_distance = 1.3 #1.3 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	smoothed_glucose = result[:, 1]
+	if params['gaps']:
+		result = make_gaps(params, result)
 	smoothed_time = result[:, 0]
+	smoothed_glucose = result[:, 1]
 	return smoothed_glucose, smoothed_time
+
+def make_gaps(params, time_gluc):
+	gaps = random.randint(params['num_days'], 3 * params['num_days']) #amount of gaps	
+	while gaps:
+		gap_length = random.randint(6, 20) #length of gaps in 5-min segments
+		start_index = int(random.uniform(0, len(time_gluc)))		
+		end_index = start_index + gap_length
+		remove = time_gluc[start_index:end_index]
+		for row in remove:
+			time_gluc = np.delete(time_gluc, row, axis=0)
+		gaps -= 1
+	return time_gluc
 
 def convert_to_mmol(iterable):
 	conversion_factor = 18.01559
