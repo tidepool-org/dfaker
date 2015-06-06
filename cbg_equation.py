@@ -3,15 +3,14 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint 
 import random
 from scipy import interpolate
-
-plt.ion()
+import statsmodels.api as sm
 
 def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insulin_rate=0.0224, minutes=100, start_time=0):
-	"""Constructs a blood glucose equation using the foloowing initial paremeters:
-		initial_carbs, the intake amount of carbs -- a bolus or a meal
-		initial_sugar, the baseline value of glucose at time zero
-		digestion_rate, how quickly food is digested
-		insulin_rate, how quickly insulin is released.
+	"""Constructs a blood glucose equation using the following initial paremeters:
+		initial_carbs -- the intake amount of carbs 
+		initial_sugar -- the baseline value of glucose at time zero
+		digestion_rate -- how quickly food is digested
+		insulin_rate -- how quickly insulin is released.
 	"""
 	def model_func(y, t):
 		Ci = y[0]
@@ -31,40 +30,56 @@ def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insu
 		gluc = elem[0][1]
 		time = elem[1]
 		carb_gluc_time.append([carb, gluc, time])
-	numpy_cgt = np.array(carb_gluc_time)
-	return numpy_cgt
+	np_cgt = np.array(carb_gluc_time)
+	return np_cgt
 
-def stich_func(num_days=1):
+def assign_carbs(sugar, last_carbs, sugar_in_range):
+	""" Assign next 'meal' event based on:
+		sugar -- the current glucose level 
+		last_carb -- the previous carb value
+		sugar_in_range -- list of previous consecutive 'in range' sugar events 
+	"""
+	if sugar >= 240:
+		carbs = random.uniform(-320, -290)
+	elif sugar >= 200:
+		carbs = random.triangular(-250, -180, -220)
+	elif len(sugar_in_range) >= 3:
+		carbs = random.uniform(150, 200)
+	elif sugar <= 50:
+		carbs = random.triangular(190, 220, 210)
+	elif sugar <= 80:
+		carbs = random.triangular(160, 180, 175)
+	elif last_carbs > 50:
+		carbs = random.uniform(-120, -100)
+	else:
+		carbs = random.triangular(-50, 100, 60)
+	return carbs
+
+def stitch_func(num_days=180):
 	days_in_minutes = num_days * 24 * 60
-	sugar = random.uniform(60, 300) #start with random sugar level
+	sugar = random.uniform(80, 180) #start with random sugar level
+	last_carbs = random.uniform(-60, 300)
 	start_time = 0
+	sugar_in_range = []
 	simulator_data = []
 	while start_time < days_in_minutes:
-		carbs = random.uniform(-60, 70)
-		digestion = random.uniform(0.004, 0.08)
+		if int(sugar) in range(80, 180):
+			sugar_in_range.append(sugar)
+		else:
+			sugar_in_range = []			
+		carbs = assign_carbs(sugar, last_carbs, sugar_in_range)
+		digestion = random.uniform(0.04, 0.08)
 		insulin_rate = random.uniform(0.002, 0.05)
-		minutes = random.uniform(100, 200) #time in minutes
+		minutes = random.uniform(100, 200) #change this to higher numbers for less frequent events
 		result = simulator(carbs, sugar, digestion, insulin_rate, minutes, start_time)
 		simulator_data.append(result)		
 		sugar = result[-1][1]
 		start_time += minutes
-	stiched = []
+		last_carbs = carbs
+	stitched = []
 	for array in simulator_data:
 		for cgt_val in array:
-			stiched.append(cgt_val)
-	np_stiched = np.array(stiched)
-	return np_stiched
+			stitched.append(cgt_val)
+	np_stitched = np.array(stitched)
+	return np_stitched
 
-solution = stich_func()
-carbs = solution[:, 0]
-glucose = solution[:, 1]
-t = solution[:, 2]
-
-plt.figure()
-plt.plot(t, carbs, label='Carbs')
-plt.plot(t, glucose, label='Glucose')
-plt.xlabel('Time (Minutes)')
-plt.ylabel('Blood Glucose level (mg/dL)')
-plt.legend(['carbs', 'glucose'])
-plt.title("Glucose vs. Time")
-plt.savefig('stich3.png')
