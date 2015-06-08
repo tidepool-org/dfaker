@@ -8,67 +8,72 @@ import argparse
 import sys
 import cbg_equation
 import statsmodels.api as sm
-
 import random
 import numpy as np 
 
 params = {
-	'year' : 2015, #default datetime settings
-	'month' : 1,
-	'day' : 1,
-	'hour' : 0,
-	'minute' : 0,
+	'datetime' : datetime.strptime('2015-1-1 0:0', '%Y-%m-%d %H:%M'),  #default datetime settings
 	'zone' : 'US/Pacific', #default zone
-	'num_days' : 30, #default days to generate data for
+	'num_days' : 30, #default number of days to generate data for
 	'file' : 'device-data.json', #default json file name 
 	'minify' : False, #compact storage option false by default 
 	'gaps' : False, #randomized gaps in data, off by default 
-	'smbg_freq' : 6 #default fingersticks per day
+	'smbg_freq' : 6 #default number of fingersticks per day
 }
 
 def parse(args, params):
 	if args.date:
 		try:
-			params['year'] = int(args.date[0:4])
-			params['month'] = int(args.date[5:7]) 
-			params['day'] = int(args.date[8:])
+			year = int(args.date[0:4])
+			month = int(args.date[5:7]) 
+			day = int(args.date[8:])
 		
-			if (params['month'] not in range(1, 13) 
-					or params['day'] not in range(1, 32) 
-					or params['year'] not in range(1900, 2100) 
+			if (month not in range(1, 13) 
+					or day not in range(1, 32) 
+					or year not in range(1900, 2100) 
 					or len(args.date) != 10):
 				print('Invalid range: {:s}. Please enter date as YYYY-MM-DD'.format(args.date))
 				sys.exit(1)
+
+			params['datetime'] = params['datetime'].replace(year=year, month=month, day=day)
+
 		except:		
 			print('Wrong date format: {:s}. Please enter date as YYYY-MM-DD'.format(args.date))
 			sys.exit(1)
 
 	if args.time:
 		try:
-			params['hour'] = int(args.time[:2])
-			params['minute'] = int(args.time[3:])
+			hour = int(args.time[:2])
+			minute = int(args.time[3:])
 
-			if (params['hour'] not in range(0, 25) 
-					or params['minute'] not in range(0, 61) 
+			if (hour not in range(0, 25) 
+					or minute not in range(0, 61) 
 					or len(args.time) != 5):
 				print('Invalid range: {:s}. Please enter time as HH:MM'.format(args.time))
 				sys.exit(1)
+
+			params['datetime'] = params['datetime'].replace(hour=hour, minute=minute)
+
 		except:
 			print('Wrong time format: {:s}. Please enter time as HH:MM'.format(args.time))
 			sys.exit(1)
 	 
 	if args.zone:
 		if args.zone not in pytz.common_timezones:
-			print('Unrecongznied zone: {:s}'.format(args.zone))
+			print('Unrecognized zone: {:s}'.format(args.zone))
 			sys.exit(1)
 		params['zone'] = args.zone
 
 	if args.num_days:
-		params['num_days'] = args.num_days
+		try:
+			params['num_days'] = int(args.num_days)
+		except:
+			print('Wrong input, num_days argument should be a number')
+			sys.exit(1)
 
 	if args.file:
 		if args.file[-5:] != '.json':
-			print('Output file must be in be a json file')
+			print('Output file name should have a .json extension')
 			sys.exit(1)
 		params['file'] = args.file
 
@@ -90,11 +95,10 @@ def parse(args, params):
 			sys.exit(1)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-tz', '--timezone', dest='zone', help='Local timezone')
+parser.add_argument('-z', '--timezone', dest='zone', help='Local timezone')
 parser.add_argument('-d', '--date', dest='date', help='Date in the following format: YYYY-MM-DD')
 parser.add_argument('-t', '--time', dest='time', help='Time in the following format: HH:MM')
-parser.add_argument('-nd', '--num_days', dest='num_days',
-					help='Number of days to generate data. Default = 180')
+parser.add_argument('-n', '--num_days', dest='num_days', help='Number of days to generate data')
 parser.add_argument('-f', '--output_file', dest='file', help='Name of output json file')
 parser.add_argument('-m', '--minify', dest='minify', action='store_true', help='Minify the json file')
 parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
@@ -105,7 +109,7 @@ parse(args, params)
 def apply_loess(params, solution):
 	"""Solves the blood glucose equation over specified period of days 
 		and applies a loess smoothing regression to the data 
-		Returns a numpy array of glucose time values 
+		Returns numpy arrays for glucose and time values 
 	"""
 	#solving blood glucose eqn 
 	glucose = solution[:, 1]
@@ -125,12 +129,13 @@ def apply_loess(params, solution):
 def get_offset(params):
 	utc_tz = timezone('UTC')
 	local_tz = timezone(params['zone'])
-	naive = datetime(params['year'], params['month'], params['day'], params['hour'], params['minute'])
+	d = params['datetime']
+	naive = datetime(d.year, d.month, d.day, d.hour, d.minute)
 	offset = int((utc_tz.localize(naive) - local_tz.localize(naive)) / timedelta(minutes=1))
 	return offset
 
 def make_gaps(params, time_gluc):
-	gaps = random.randint(4 * params['num_days'], 5 * params['num_days']) # amount of gaps	
+	gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps	
 	for _ in range(gaps):
 		gap_length = random.randint(6, 36) # length of gaps in 5-min segments
 		start_index = random.randint(0, len(time_gluc))	
@@ -142,7 +147,7 @@ def make_gaps(params, time_gluc):
 	return time_gluc
 
 def generate_boluses(solution, start_time):
-	""" Generates events for both bolus enteries and wizard enteries.
+	""" Generates events for both bolus entries and wizard entries.
 		Returns carb, time and glucose values for each event
 	"""
 	all_carbs = solution[:, 0]
@@ -155,11 +160,12 @@ def generate_boluses(solution, start_time):
 			positives.append(row)
 	np_pos = np.array(clean_up_boluses(positives))
 	cleaned = remove_night_boluses(np_pos)
-	for row in cleaned:
-		if row[0] > 120:
-			row[0] = row[0] / 2	
-		elif row[0] > 30:
-			row[0] = row[0] * 0.75
+	for row in cleaned: #find carb values that are too high and reduce them
+		carb_val = row[0]
+		if carb_val > 120:
+			carb_val= carb_val / 2	
+		elif carb_val > 30:
+			carb_val = carb_val * 0.75
 	bolus, wizard = bolus_or_wizard(cleaned)
 	np_bolus, np_wizard = np.array(bolus), np.array(wizard)
 	b_carbs, b_ts  = np_bolus[:, 0], np_bolus[:, 1]
@@ -179,15 +185,20 @@ def remove_night_boluses(carb_time_gluc):
 	"""Removes night boluses excpet for events with high glucose""" 
 	keep = []
 	for row in carb_time_gluc:
+		gluc_val = row[2]
 		hour = time.gmtime(row[1]).tm_hour
 		if (hour > 6 and hour < 23):
 			keep.append(row)
-		elif int(row[2]) not in range(0,250):
+		elif int(gluc_val) not in range(0,250):
 			keep.append(row)
 	np_keep = np.array(keep)
 	return np_keep
 
 def bolus_or_wizard(solution):
+	"""Randomely decide when to generte wizards events that are linked with boluses 
+	   and when to have plain boluses.
+	   About 2 out of 6 events will be plain boluses
+	"""
 	bolus_events, wizard_events = [], []
 	for row in solution:
 		bolus_or_wizard = random.randint(0, 5)
@@ -201,6 +212,14 @@ def convert_to_mmol(iterable):
 	conversion_factor = 18.01559
 	return [reading / conversion_factor for reading in iterable]
 
+def round_to(n, precision=0.005):
+	if n >= 0:
+		correction = 0.5 
+	else:
+		correction = -0.5
+	result = int(n / precision + correction) * precision
+	return round(result, 3)
+
 def make_timesteps(start_timestamp, timelist):
 	""" Convert list of floats representing time into epoch time"""
 	timesteps = []
@@ -210,18 +229,25 @@ def make_timesteps(start_timestamp, timelist):
 		timesteps.append(new_time)
 	return timesteps
 
+def add_common_fields(name, datatype, timestamp, params):
+	"""Populate common fields applicable to all datatypes
+	   datatype -- a dictionary for a specific data type 
+	"""
+	datatype["type"] = name
+	datatype["deviceId"] = "DemoData-123456789"
+	datatype["uploadId"] = "upid_fdbde582fe2b"
+	datatype["id"] = str(uuid.uuid4())
+	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
+	datatype["timezoneOffset"] = get_offset(params)
+	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
+								- datatype["timezoneOffset"]*60)))
+	return datatype
+
 def cbg(gluc, timesteps, params):
 	for value, timestamp in zip(convert_to_mmol(gluc), timesteps):
 		cbg_reading = {}
-		cbg_reading["deviceId"] = "MiniMed 530G - 551-=-53875424"
-		cbg_reading["id"] = str(uuid.uuid4())
-		cbg_reading["uploadId"] = "upid_fdbde582fe2b"
-		cbg_reading["type"] = "cbg"
-		cbg_reading["value"] = value
-		cbg_reading["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
-		cbg_reading["timezoneOffset"] = get_offset(params)
-		cbg_reading["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-								- cbg_reading["timezoneOffset"]*60)))
+		cbg_reading = add_common_fields('cbg', cbg_reading, timestamp, params)
+		cbg_reading["value"] = round_to(value)
 		cbg_reading["units"] = "mmol/L"
 		dfaker.append(cbg_reading)
 
@@ -232,57 +258,40 @@ def smbg(gluc, timesteps, params):
 	time_gluc = list(zip(convert_to_mmol(gluc), timesteps))
 	for value, timestamp in time_gluc[::increment]:
 		smbg_reading = {}
-		smbg_reading["deviceId"] = "MiniMed 530G - 551-=-53875424"
-		smbg_reading["id"] = str(uuid.uuid4())
-		smbg_reading["type"] = "smbg"
-		smbg_reading["uploadId"] = "upid_fdbde582fe2b"
+		smbg_reading = add_common_fields('smbg', smbg_reading, timestamp, params)
 		smbg_reading["value"] = value + random.uniform(-1.5, 1.5) #in mmol/L
-		randimize_time = random.randint(-6000, 6000)
-		smbg_reading["deviceTime"] = (time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp 
-									 + randimize_time)))
-		smbg_reading["timezoneOffset"] = get_offset(params) 
-		smbg_reading["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp                          
-								+ randimize_time - smbg_reading["timezoneOffset"]*60)))
+		randomize_time = random.randint(-6000, 6000)
 		smbg_reading["units"] = "mmol/L"
 		dfaker.append(smbg_reading)
 
 def bolus(carbs, timesteps, params):
+	access_settings = dfaker[0]
+	carb_ratio = access_settings["carbRatio"][0]["amount"]
 	for value, timestamp in zip(carbs, timesteps):		
 		normal_or_square = random.randint(0, 4)
 		if normal_or_square == 3:
-			dual_square_bolus(value, timestamp, params)
+			dual_square_bolus(value, timestamp, carb_ratio, params)
 		else:
-			normal_bolus(value, timestamp, params)
+			normal_bolus(value, timestamp, carb_ratio, params)
 
-def dual_square_bolus(value, timestamp, params):
+def dual_square_bolus(value, timestamp, carb_ratio, params):
+	access_settings = dfaker[0]
 	bolus_entry = {}
-	bolus_entry["deviceId"] = "MiniMed 530G - 551-=-53875424"
-	bolus_entry["id"] = str(uuid.uuid4())
-	bolus_entry["uploadId"] = "upid_fdbde582fe2b"
-	bolus_entry["type"] = "bolus"
+	bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
 	bolus_entry["subType"] = "dual/square"
-	bolus_entry["normal"] = random.uniform((value / 10) / 3, (value / 10) / 2) 
-	bolus_entry["extended"] = (value / 10) - bolus_entry["normal"]
+	insulin = value / carb_ratio
+	bolus_entry["normal"] = round_to(random.uniform(insulin / 3, insulin / 2)) 
+	bolus_entry["extended"] = round_to(insulin - bolus_entry["normal"]) 
 	bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000) #in ms
-	bolus_entry["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
-	bolus_entry["timezoneOffset"] = get_offset(params)
-	bolus_entry["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-							- bolus_entry["timezoneOffset"]*60)))
 	dfaker.append(bolus_entry)
 	return bolus_entry
 
-def normal_bolus(value, timestamp, params):
+def normal_bolus(value, timestamp, carb_ratio, params):
 	bolus_entry = {}
-	bolus_entry["deviceId"] = "MiniMed 530G - 551-=-53875424"
-	bolus_entry["id"] = str(uuid.uuid4())
-	bolus_entry["uploadId"] = "upid_fdbde582fe2b"
-	bolus_entry["type"] = "bolus"
+	bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
 	bolus_entry["subType"] = "normal"
-	bolus_entry["normal"] = value / 10
-	bolus_entry["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
-	bolus_entry["timezoneOffset"] = get_offset(params)
-	bolus_entry["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-							- bolus_entry["timezoneOffset"]*60)))
+	insulin = round_to(value / carb_ratio)
+	bolus_entry["normal"] = insulin
 	dfaker.append(bolus_entry)
 	return bolus_entry
 
@@ -290,8 +299,8 @@ def wizard(gluc, carbs, timesteps, params):
 	access_settings = dfaker[0]
 	for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
 		wizard_reading = {}
-		wizard_reading["type"] = "wizard"
-		wizard_reading["bgInput"] = gluc_val
+		wizard_reading = add_common_fields('wizard', wizard_reading, timestamp, params)
+		wizard_reading["bgInput"] = round_to(gluc_val)
 		wizard_reading["carbInput"] = int(carb_val)
 		wizard_reading["insulinOnBoard"] = 0
 		wizard_reading["insulinCarbRatio"] = access_settings["carbRatio"][0]["amount"]
@@ -300,69 +309,66 @@ def wizard(gluc, carbs, timesteps, params):
             							"low": access_settings["bgTarget"][0]["low"]}
 		wizard_reading["payload"] = {}
 		wizard_reading["recommended"] = {}
-		wizard_reading["recommended"]["carb"] = wizard_reading["carbInput"] / wizard_reading["insulinCarbRatio"]
+		wizard_reading["recommended"]["carb"] = round_to(wizard_reading["carbInput"] / wizard_reading["insulinCarbRatio"])
 		wizard_reading["recommended"]["correction"] =  0
-		wizard_reading["recommended"]["net"] = (wizard_reading["recommended"]["carb"] 
-											   + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"])
+		wizard_reading["recommended"]["net"] = (round_to(wizard_reading["recommended"]["carb"] 
+											   + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"]))
 		normal_or_square = random.randint(0, 4)
 		if normal_or_square == 3:
 			bolus = dual_square_bolus
 		else:
 			bolus = normal_bolus
-		wizard_reading["bolus"] = bolus(carb_val, timestamp, params)["id"]
-
-		wizard_reading["deviceId"] = "MiniMed 530G - 551-=-53875424"
-		wizard_reading["uploadId"] = "upid_fdbde582fe2b"
-		wizard_reading["id"] = str(uuid.uuid4())
-		wizard_reading["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
-		wizard_reading["timezoneOffset"] = get_offset(params)
-		wizard_reading["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-								  - wizard_reading["timezoneOffset"]*60)))
+		carb_ratio = access_settings["carbRatio"][0]["amount"]
+		wizard_reading["bolus"] = bolus(carb_val, timestamp, carb_ratio, params)["id"]
 		dfaker.append(wizard_reading)
+
+def basal(start_time, params):
+	access_settings = dfaker[0]
+	next_time = int(start_time.strftime('%s')) #in seconds
+	seconds_to_add = params["num_days"] * 24 * 60 * 60
+	end_date = start_time + timedelta(seconds=seconds_to_add)
+	end_time = int(end_date.strftime('%s'))
+	while next_time < end_time:
+		basal_entry = {}
+		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
+		basal_entry["deliveryType"] ="scheduled" #scheduled for now
+		basal_entry["duration"] = random.randrange(7200000, 21600000, 1800000) #in ms
+		randomize_rate = random.randrange(-25, 25, 5) / 100
+		basal_entry["rate"] = access_settings["basalSchedules"]["standard"][0]["rate"] + randomize_rate
+		basal_entry["scheduleName"] = "standard"
+		next_time += basal_entry["duration"] / 1000
+		dfaker.append(basal_entry)
 
 def settings(start_time, params):
 	settings = {}
+	time_in_seconds = int(start_time.strftime('%s'))
+	settings = add_common_fields('settings', settings, time_in_seconds, params)
 	settings["activeSchedule"] = "standard"
-	settings["basalSchedules"] =  {"standard": [{"rate": 0.75, "start": 0},
-												{"rate": 0.6, "start": 3600000},
-												{"rate": 0.65, "start": 10800000},
-												{"rate": 0.8, "start": 14400000},
-												{"rate": 0.85, "start": 18000000},
-												{"rate": 0.8, "start": 28800000},
-												{"rate": 0.75, "start": 32400000},
-												{"rate": 0.8, "start": 54000000},
-												{"rate": 0.85, "start": 61200000}]}
+	settings["basalSchedules"] = {"standard": [{"rate": 0.8, "start": 0}]}
 	settings["bgTarget"] = [{"high": random.uniform(5.8, 6.2), 
 							 "low": random.uniform(4.4, 5.2), 
 							 "start": 0}]
 	settings["carbRatio"] = [ {"amount": random.randint(9, 15), "start": 0}]
 	settings["insulinSensitivity"] = [{"amount": 2.7, "start": 0}]
-	settings["type"] = "settings"
 	settings["units"] = { "bg": "mg/dL","carb": "grams"}
-	settings["deviceId"] = "MiniMed 530G - 551-=-53875424"
-	settings["uploadId"] = "upid_fdbde582fe2b"
-	settings["id"] = str(uuid.uuid4())
-	time_in_seconds = int(start_time.strftime('%s'))
-	settings["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(time_in_seconds))
-	settings["timezoneOffset"] = get_offset(params)
-	settings["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(time_in_seconds
-							  - settings["timezoneOffset"]*60)))
 	dfaker.append(settings)
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
 
-start_time = datetime(params['year'], params['month'], params['day'], 
-					params['hour'], params['minute'], tzinfo=timezone(params['zone']))
+d = params['datetime']
+start_time = datetime(d.year, d.month, d.day, 
+					d.hour, d.minute, tzinfo=timezone(params['zone']))
 
 glucose, gluc_time = apply_loess(params, solution)
 gluc_timesteps = make_timesteps(start_time, gluc_time)
 
 b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time)
 
-
 #add settings to dfaker
 settings(start_time, params)
+#add basal to dfaker
+basal(start_time, params)
 #add bolus values to dfaker
 bolus(b_carbs, b_carb_timesteps, params)
 #add wizard events to dfaker
@@ -371,7 +377,6 @@ wizard(w_gluc, w_carbs, w_carb_timesteps, params)
 cbg(glucose, gluc_timesteps, params)
 #add smbg values to dfaker
 smbg(glucose, gluc_timesteps, params)
-
 
 #write to json file
 file_object = open(params['file'], mode='w')
@@ -382,6 +387,3 @@ else:
 file_object.close()
 
 sys.exit(0)
-
-
-
