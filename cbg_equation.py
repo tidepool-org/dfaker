@@ -23,7 +23,6 @@ def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insu
 	t = np.linspace(start_time, start_time + minutes, minutes / 5) #timestep every 5 minutes 
 	carb_gluc = odeint(model_func, y0, t)
 	cgt = zip(carb_gluc, t)
-	
 	carb_gluc_time = []
 	for elem in cgt:
 		carb = elem[0][0]
@@ -40,17 +39,21 @@ def assign_carbs(sugar, last_carbs, sugar_in_range):
 		sugar_in_range -- list of previous consecutive 'in range' sugar events 
 	"""
 	if sugar >= 240:
-		carbs = random.uniform(-320, -290)
+		carbs = random.uniform(-300, -290)
 	elif sugar >= 200:
 		carbs = random.triangular(-250, -180, -220)
 	elif len(sugar_in_range) >= 3:
-		carbs = random.uniform(150, 200)
+		high_or_low = random.randint(0,1) #if sugar in range, randomley generate high or low event
+		if high_or_low == 0:
+			carbs = random.uniform(230, 250)
+		else:
+			carbs = random.uniform(-250, 250)
 	elif sugar <= 50:
-		carbs = random.triangular(190, 220, 210)
+		carbs = random.triangular(270, 300, 290)
 	elif sugar <= 80:
-		carbs = random.triangular(160, 180, 175)
+		carbs = random.triangular(200, 250, 230)
 	elif last_carbs > 50:
-		carbs = random.uniform(-120, -100)
+		carbs = random.uniform(-190, -170)
 	else:
 		carbs = random.triangular(-50, 100, 60)
 	return carbs
@@ -63,7 +66,7 @@ def stitch_func(num_days=180):
 	sugar_in_range = []
 	simulator_data = []
 	while start_time < days_in_minutes:
-		if int(sugar) in range(80, 180):
+		if int(sugar) in range(80, 195):
 			sugar_in_range.append(sugar)
 		else:
 			sugar_in_range = []			
@@ -82,4 +85,3 @@ def stitch_func(num_days=180):
 			stitched.append(cgt_val)
 	np_stitched = np.array(stitched)
 	return np_stitched
-

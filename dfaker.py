@@ -24,34 +24,17 @@ params = {
 def parse(args, params):
 	if args.date:
 		try:
-			year = int(args.date[0:4])
-			month = int(args.date[5:7]) 
-			day = int(args.date[8:])
-		
-			if (month not in range(1, 13) 
-					or day not in range(1, 32) 
-					or year not in range(1900, 2100) 
-					or len(args.date) != 10):
-				print('Invalid range: {:s}. Please enter date as YYYY-MM-DD'.format(args.date))
-				sys.exit(1)
-
+			d = datetime.strptime(args.date, '%Y-%m-%d')
+			year, month, day = d.year, d.month, d.day
 			params['datetime'] = params['datetime'].replace(year=year, month=month, day=day)
-
 		except:		
 			print('Wrong date format: {:s}. Please enter date as YYYY-MM-DD'.format(args.date))
 			sys.exit(1)
 
 	if args.time:
 		try:
-			hour = int(args.time[:2])
-			minute = int(args.time[3:])
-
-			if (hour not in range(0, 25) 
-					or minute not in range(0, 61) 
-					or len(args.time) != 5):
-				print('Invalid range: {:s}. Please enter time as HH:MM'.format(args.time))
-				sys.exit(1)
-
+			t = datetime.strptime(args.time, '%H:%M')
+			hour, minute = t.hour, t.minute
 			params['datetime'] = params['datetime'].replace(hour=hour, minute=minute)
 
 		except:
@@ -84,11 +67,11 @@ def parse(args, params):
 		params['gaps'] = True
 
 	if args.smbg_freq:
-		if smbg_freq == 'high':
+		if args.smbg_freq == 'high':
 			params['smbg_freq'] = 8
-		elif smbg_freq == 'average':
+		elif args.smbg_freq == 'average':
 			params['smbg_freq'] = 6
-		elif smbg_freq == 'low':
+		elif args.smbg_freq == 'low':
 			params['smbg_freq'] = 3
 		else:
 			print('Invalid frequency: {:s}. Please choose between high, average and low'.format(args.smbg_freq))
@@ -116,7 +99,7 @@ def apply_loess(params, solution):
 	time = solution[:, 2]
 	#smoothing blood glucose eqn
 	lowess = sm.nonparametric.lowess
-	smoothing_distance = 1.3 #1.3 minutes
+	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
 	
@@ -146,6 +129,33 @@ def make_gaps(params, time_gluc):
 		time_gluc = np.delete(time_gluc, time_gluc[start_index:end_index][::2], 0)
 	return time_gluc
 
+def remove_night_smbg(gluc, timesteps):
+	""" Remove most smbg night events """
+	keep = []
+	for row in zip(gluc, timesteps):
+		hour = time.gmtime(row[1]).tm_hour
+		night_smbg = random.randint(0, 4) #keep some random night smbg events 
+		if hour > 6 and hour < 24:
+			keep.append(row)
+		elif night_smbg == 2:
+			keep.append(row)
+	return keep
+		
+def randomize_smbg(time_gluc):
+	""" Randomize smbg times according to fingerstick frequency """
+	fingersticks_per_day = params["smbg_freq"]
+	total = (24 * 60) / 5 
+	increment = int(total / fingersticks_per_day)
+	start, keep = 0, []
+	while start < len(time_gluc):
+		try:
+			index = random.randint(start, start + increment)
+			keep.append(time_gluc[index])
+			start += increment
+		except:
+			break
+	return keep
+
 def generate_boluses(solution, start_time):
 	""" Generates events for both bolus entries and wizard entries.
 		Returns carb, time and glucose values for each event
@@ -155,39 +165,41 @@ def generate_boluses(solution, start_time):
 	time = solution[:, 2]
 	ts = make_timesteps(start_time, solution[:,2])
 	positives = []
-	for row in zip(all_carbs, ts, glucose):
+	for row in zip(all_carbs, ts, glucose): #keep significant carb events
 		if row[0] > 10:
 			positives.append(row)
 	np_pos = np.array(clean_up_boluses(positives))
 	cleaned = remove_night_boluses(np_pos)
+
 	for row in cleaned: #find carb values that are too high and reduce them
 		carb_val = row[0]
 		if carb_val > 120:
-			carb_val= carb_val / 2	
+			row[0] = carb_val / 2	
 		elif carb_val > 30:
-			carb_val = carb_val * 0.75
+			row[0] = carb_val * 0.75
 	bolus, wizard = bolus_or_wizard(cleaned)
 	np_bolus, np_wizard = np.array(bolus), np.array(wizard)
 	b_carbs, b_ts  = np_bolus[:, 0], np_bolus[:, 1]
 	w_card, w_ts, w_gluc = np_wizard[:, 0], np_wizard[:, 1], np_wizard[:,2]
 	return b_carbs, b_ts, w_card, w_ts, w_gluc
 
-def clean_up_boluses(carb_time, filter_rate=7):
+def clean_up_boluses(carb_time_gluc, filter_rate=7):
 	""" Cleans up clusters of carb events based on meal freqeuncy
-		carb_time -- a numpy array of carbohydrates at different points in time
+		carb_time_gluc -- a numpy array of carbohydrates and glucose values at different points in time
 		filter_rate -- how many 5 minute segments should be filtered within the range
 					   of a single event.
 					   Example: 7 * 5 --> remove the next 35 minutes of data from carb_time
 	"""
-	return carb_time[::filter_rate]
+	return carb_time_gluc[::filter_rate]
 
 def remove_night_boluses(carb_time_gluc):
 	"""Removes night boluses excpet for events with high glucose""" 
 	keep = []
 	for row in carb_time_gluc:
+		time_val = row[1]
 		gluc_val = row[2]
-		hour = time.gmtime(row[1]).tm_hour
-		if (hour > 6 and hour < 23):
+		hour = time.gmtime(time_val).tm_hour
+		if hour > 6 and hour < 23:
 			keep.append(row)
 		elif int(gluc_val) not in range(0,250):
 			keep.append(row)
@@ -210,6 +222,8 @@ def bolus_or_wizard(solution):
 
 def convert_to_mmol(iterable):
 	conversion_factor = 18.01559
+	if isinstance(iterable, float) or isinstance(iterable, int):
+		return iterable / conversion_factor
 	return [reading / conversion_factor for reading in iterable]
 
 def round_to(n, precision=0.005):
@@ -235,7 +249,7 @@ def add_common_fields(name, datatype, timestamp, params):
 	"""
 	datatype["type"] = name
 	datatype["deviceId"] = "DemoData-123456789"
-	datatype["uploadId"] = "upid_fdbde582fe2b"
+	datatype["uploadId"] = "upid_abcdefghijklmnop"
 	datatype["id"] = str(uuid.uuid4())
 	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
 	datatype["timezoneOffset"] = get_offset(params)
@@ -244,23 +258,33 @@ def add_common_fields(name, datatype, timestamp, params):
 	return datatype
 
 def cbg(gluc, timesteps, params):
-	for value, timestamp in zip(convert_to_mmol(gluc), timesteps):
+	for value, timestamp in zip(gluc, timesteps):
 		cbg_reading = {}
 		cbg_reading = add_common_fields('cbg', cbg_reading, timestamp, params)
-		cbg_reading["value"] = round_to(value)
+		cbg_reading["value"] = convert_to_mmol(value)
 		cbg_reading["units"] = "mmol/L"
+		if value >= 400:
+			cbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 400, "value": "high"}]
+			cbg_reading["value"] = convert_to_mmol(401)
+		elif value <= 40:
+			cbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 40, "value": "low"}]
+			cbg_reading["value"] = convert_to_mmol(39)
 		dfaker.append(cbg_reading)
 
 def smbg(gluc, timesteps, params):
-	fingersticks_per_day = params['smbg_freq']
-	total = (24 * 60) / 5
-	increment = int(total / fingersticks_per_day)
-	time_gluc = list(zip(convert_to_mmol(gluc), timesteps))
-	for value, timestamp in time_gluc[::increment]:
+	remove_night = remove_night_smbg(gluc, timesteps)	
+	time_gluc = randomize_smbg(remove_night)
+	for value, timestamp in time_gluc:
+		randomize_time = random.randrange(-5000, 5000)
 		smbg_reading = {}
 		smbg_reading = add_common_fields('smbg', smbg_reading, timestamp, params)
-		smbg_reading["value"] = value + random.uniform(-1.5, 1.5) #in mmol/L
-		randomize_time = random.randint(-6000, 6000)
+		smbg_reading["value"] = convert_to_mmol(value) + random.uniform(-1.5, 1.5) #in mmol/L
+		if value >= 600:
+			smbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 600, "value": "high"}]
+			smbg_reading["value"] = convert_to_mmol(601)
+		elif value <= 20:
+			smbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 40, "value": "low"}]
+			smbg_reading["value"] = convert_to_mmol(19)
 		smbg_reading["units"] = "mmol/L"
 		dfaker.append(smbg_reading)
 
@@ -279,7 +303,7 @@ def dual_square_bolus(value, timestamp, carb_ratio, params):
 	bolus_entry = {}
 	bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
 	bolus_entry["subType"] = "dual/square"
-	insulin = value / carb_ratio
+	insulin = int(value) / carb_ratio
 	bolus_entry["normal"] = round_to(random.uniform(insulin / 3, insulin / 2)) 
 	bolus_entry["extended"] = round_to(insulin - bolus_entry["normal"]) 
 	bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000) #in ms
@@ -290,7 +314,7 @@ def normal_bolus(value, timestamp, carb_ratio, params):
 	bolus_entry = {}
 	bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
 	bolus_entry["subType"] = "normal"
-	insulin = round_to(value / carb_ratio)
+	insulin = round_to(int(value) / carb_ratio)
 	bolus_entry["normal"] = insulin
 	dfaker.append(bolus_entry)
 	return bolus_entry
@@ -300,7 +324,7 @@ def wizard(gluc, carbs, timesteps, params):
 	for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
 		wizard_reading = {}
 		wizard_reading = add_common_fields('wizard', wizard_reading, timestamp, params)
-		wizard_reading["bgInput"] = round_to(gluc_val)
+		wizard_reading["bgInput"] = convert_to_mmol(gluc_val)
 		wizard_reading["carbInput"] = int(carb_val)
 		wizard_reading["insulinOnBoard"] = 0
 		wizard_reading["insulinCarbRatio"] = access_settings["carbRatio"][0]["amount"]
@@ -313,14 +337,29 @@ def wizard(gluc, carbs, timesteps, params):
 		wizard_reading["recommended"]["correction"] =  0
 		wizard_reading["recommended"]["net"] = (round_to(wizard_reading["recommended"]["carb"] 
 											   + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"]))
+		carb_ratio = access_settings["carbRatio"][0]["amount"]
 		normal_or_square = random.randint(0, 4)
-		if normal_or_square == 3:
+		if normal_or_square == 3: #decide which bolus to generate 
 			bolus = dual_square_bolus
 		else:
 			bolus = normal_bolus
-		carb_ratio = access_settings["carbRatio"][0]["amount"]
-		wizard_reading["bolus"] = bolus(carb_val, timestamp, carb_ratio, params)["id"]
+		override  = override_wizard(carb_val)
+		if override:
+			wizard_reading["bolus"] = bolus(override, timestamp, carb_ratio, params)["id"]
+		else:
+			wizard_reading["bolus"] = bolus(carb_val, timestamp, carb_ratio, params)["id"]
 		dfaker.append(wizard_reading)
+
+def override_wizard(carb_val):
+	""" Returns a new carb value when the user overrides the recommended bolus
+		Otherwise returns False 
+	"""
+	override = random.randint(0,4)
+	if override == 3:
+		user_overridden_bolus = carb_val + random.randrange(-30, 30, 5)
+		if user_overridden_bolus >= 0.5:
+			return user_overridden_bolus
+	return False
 
 def basal(start_time, params):
 	access_settings = dfaker[0]
@@ -331,7 +370,7 @@ def basal(start_time, params):
 	while next_time < end_time:
 		basal_entry = {}
 		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
-		basal_entry["deliveryType"] ="scheduled" #scheduled for now
+		basal_entry["deliveryType"] = "scheduled" #scheduled for now
 		basal_entry["duration"] = random.randrange(7200000, 21600000, 1800000) #in ms
 		randomize_rate = random.randrange(-25, 25, 5) / 100
 		basal_entry["rate"] = access_settings["basalSchedules"]["standard"][0]["rate"] + randomize_rate
@@ -377,6 +416,7 @@ wizard(w_gluc, w_carbs, w_carb_timesteps, params)
 cbg(glucose, gluc_timesteps, params)
 #add smbg values to dfaker
 smbg(glucose, gluc_timesteps, params)
+
 
 #write to json file
 file_object = open(params['file'], mode='w')
