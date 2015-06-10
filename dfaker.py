@@ -116,8 +116,6 @@ def apply_loess(params, solution):
 	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	if params['gaps']:
-		result = make_gaps(params, result)
 	smoothed_time = result[:, 0]
 	smoothed_glucose = result[:, 1]
 	return smoothed_glucose, smoothed_time
@@ -130,17 +128,39 @@ def get_offset(params):
 	offset = int((utc_tz.localize(naive) - local_tz.localize(naive)) / timedelta(minutes=1))
 	return offset
 
-def make_gaps(params, time_gluc):
+def gaps(data):
+	""" Create randomized gaps in fake data if user selects the gaps option
+		Returns data with gaps if gaps are selected, otherwise returns full data set 
+	"""
+	if params["gaps"]:
+		solution_list = solution.tolist()
+		gap_list = create_gap_list(params, solution)
+		for gap in gap_list:
+			solution_list = remove_gaps(solution_list, gap[0], gap[1])
+		new_solution = np.array(solution_list)
+		return new_solution
+	return data
+
+def create_gap_list(params, time_gluc):
+	""" Returns sorted list of lists that represent indecies to be removed.
+		Each inner list is a two element list containing a start index and an end index
+	"""
 	gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps	
+	gap_list = []
 	for _ in range(gaps):
-		gap_length = random.randint(6, 36) # length of gaps in 5-min segments
+		gap_length = random.randint(10, 40) # length of gaps in 5-min segments
 		start_index = random.randint(0, len(time_gluc))	
 		if start_index + gap_length > len(time_gluc):
 			end_index = len(time_gluc) - 5
 		else:
 			end_index = start_index + gap_length
-		time_gluc = np.delete(time_gluc, time_gluc[start_index:end_index][::2], 0)
-	return time_gluc
+		gap_list.append([start_index, end_index])
+	gap_list.sort()
+	gap_list.reverse()
+	return gap_list 
+
+def remove_gaps(data, start, end):
+	return data[:start] + data[end:]
 
 def remove_night_smbg(gluc, timesteps):
 	""" Remove most smbg night events """
@@ -268,10 +288,9 @@ def add_common_fields(name, datatype, timestamp, params):
 	datatype["deviceId"] = "DemoData-123456789"
 	datatype["uploadId"] = "upid_abcdefghijklmnop"
 	datatype["id"] = str(uuid.uuid4())
-	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
 	datatype["timezoneOffset"] = get_offset(params)
-	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-								- datatype["timezoneOffset"]*60)))
+	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp + datatype["timezoneOffset"]*60))
+	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp)))
 	return datatype
 
 def cbg(gluc, timesteps, params):
@@ -374,7 +393,7 @@ def override_wizard(carb_val):
 	override = random.randint(0,4)
 	if override == 3:
 		user_overridden_bolus = carb_val + random.randrange(-30, 30, 5)
-		if user_overridden_bolus >= 0.5:
+		if user_overridden_bolus >= 1:
 			return user_overridden_bolus
 	return False
 
@@ -388,13 +407,13 @@ def basal(start_time, params):
 		basal_entry = {}
 		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
 		basal_entry["deliveryType"] = "scheduled" #scheduled for now	
-		basal_rate_time = access_settings["basalSchedules"]["standard"]		
+		schedule = access_settings["basalSchedules"]["standard"]		
 		t = datetime.strptime(basal_entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
 		ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
-		for entry in basal_rate_time:
-			if ms_since_midnight >= entry["start"] and ms_since_midnight < entry["end"]:
-				basal_entry["rate"] = entry["rate"]
-				basal_entry["duration"] = entry["end"] - entry["start"] #in ms	
+		for segment in schedule:
+			if ms_since_midnight >= segment["start"] and ms_since_midnight < segment["end"]:
+				basal_entry["rate"] = segment["rate"]
+				basal_entry["duration"] = segment["end"] - segment["start"] #in ms	
 		basal_entry["scheduleName"] = "standard"
 		next_time += basal_entry["duration"] / 1000
 		dfaker.append(basal_entry)
@@ -413,16 +432,19 @@ def settings(start_time, params):
 												{"rate": 0.75, "start": 32400000, "end": 54000000},
 												{"rate": 0.8, "start": 54000000, "end": 61200000},
 												{"rate": 0.85, "start": 61200000, "end": 86400000}]}
-	settings["bgTarget"] = [{"high": random.uniform(5.8, 6.2), 
-							 "low": random.uniform(4.4, 5.2), 
+	bgTarget_low = random.randrange(80, 120, 10)
+	bgTarget_high = random.randrange(bgTarget_low, 140, 10)
+	settings["bgTarget"] = [{"high": convert_to_mmol(bgTarget_high), 
+							 "low": convert_to_mmol(bgTarget_low), 
 							 "start": 0}]
 	settings["carbRatio"] = [ {"amount": random.randint(9, 15), "start": 0}]
-	settings["insulinSensitivity"] = [{"amount": 2.7, "start": 0}]
+	settings["insulinSensitivity"] = [{"amount": convert_to_mmol(50), "start": 0}]
 	settings["units"] = { "bg": "mg/dL","carb": "grams"}
 	dfaker.append(settings)
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
+solution = gaps(solution)
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
