@@ -116,8 +116,8 @@ def apply_loess(params, solution):
 	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	if params['gaps']:
-		result = make_gaps(params, result)
+	#if params['gaps']:
+	#	result = make_gaps(params, result)
 	smoothed_time = result[:, 0]
 	smoothed_glucose = result[:, 1]
 	return smoothed_glucose, smoothed_time
@@ -129,9 +129,26 @@ def get_offset(params):
 	naive = datetime(d.year, d.month, d.day, d.hour, d.minute)
 	offset = int((utc_tz.localize(naive) - local_tz.localize(naive)) / timedelta(minutes=1))
 	return offset
+	
+def gaps(data):
+	""" Create randomized gaps in dake data if user selects the gaps option
+		Returns data with gaps if gaps, otherwise returns full data set 
+	"""
+	if params["gaps"]:
+		solution_list = solution.tolist()
+		gap_list = create_gap_list(params, solution)
+		for gap in gap_list:
+			solution_list = remove_gaps(solution_list, gap[0], gap[1])
+		new_solution = np.array(solution_list)
+		return new_solution
+	return solution
 
-def make_gaps(params, time_gluc):
+def create_gap_list(params, time_gluc):
+	""" Returns sorted list of indecies to remove from data in
+		reverse order
+	"""
 	gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps	
+	gap_list = []
 	for _ in range(gaps):
 		gap_length = random.randint(6, 36) # length of gaps in 5-min segments
 		start_index = random.randint(0, len(time_gluc))	
@@ -139,8 +156,13 @@ def make_gaps(params, time_gluc):
 			end_index = len(time_gluc) - 5
 		else:
 			end_index = start_index + gap_length
-		time_gluc = np.delete(time_gluc, time_gluc[start_index:end_index][::2], 0)
-	return time_gluc
+		gap_list.append([start_index, end_index])
+	gap_list.sort()
+	gap_list.reverse()
+	return gap_list 
+
+def remove_gaps(data, start, end):
+	return data[:start] + data[end:]
 
 def remove_night_smbg(gluc, timesteps):
 	""" Remove most smbg night events """
@@ -423,6 +445,7 @@ def settings(start_time, params):
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
+solution = gaps(solution)
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
