@@ -116,8 +116,6 @@ def apply_loess(params, solution):
 	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	#if params['gaps']:
-	#	result = make_gaps(params, result)
 	smoothed_time = result[:, 0]
 	smoothed_glucose = result[:, 1]
 	return smoothed_glucose, smoothed_time
@@ -129,10 +127,10 @@ def get_offset(params):
 	naive = datetime(d.year, d.month, d.day, d.hour, d.minute)
 	offset = int((utc_tz.localize(naive) - local_tz.localize(naive)) / timedelta(minutes=1))
 	return offset
-	
+
 def gaps(data):
-	""" Create randomized gaps in dake data if user selects the gaps option
-		Returns data with gaps if gaps, otherwise returns full data set 
+	""" Create randomized gaps in fake data if user selects the gaps option
+		Returns data with gaps if gaps are selected, otherwise returns full data set 
 	"""
 	if params["gaps"]:
 		solution_list = solution.tolist()
@@ -144,8 +142,8 @@ def gaps(data):
 	return solution
 
 def create_gap_list(params, time_gluc):
-	""" Returns sorted list of indecies to remove from data in
-		reverse order
+	""" Returns sorted list of lists that represent indecies to be removed.
+		Each inner list is a two element list containing a start index and an end index
 	"""
 	gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps	
 	gap_list = []
