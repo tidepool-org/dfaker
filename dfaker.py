@@ -139,7 +139,7 @@ def gaps(data):
 			solution_list = remove_gaps(solution_list, gap[0], gap[1])
 		new_solution = np.array(solution_list)
 		return new_solution
-	return solution
+	return data
 
 def create_gap_list(params, time_gluc):
 	""" Returns sorted list of lists that represent indecies to be removed.
