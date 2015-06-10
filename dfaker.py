@@ -370,10 +370,14 @@ def basal(start_time, params):
 	while next_time < end_time:
 		basal_entry = {}
 		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
-		basal_entry["deliveryType"] = "scheduled" #scheduled for now
-		basal_entry["duration"] = random.randrange(7200000, 21600000, 1800000) #in ms
-		randomize_rate = random.randrange(-25, 25, 5) / 100
-		basal_entry["rate"] = access_settings["basalSchedules"]["standard"][0]["rate"] + randomize_rate
+		basal_entry["deliveryType"] = "scheduled" #scheduled for now	
+		basal_rate_time = access_settings["basalSchedules"]["standard"]
+		t = datetime.strptime(basal_entry["time"], '%Y-%m-%dT%H:%M:%S.000Z')
+		ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
+		for entry in basal_rate_time:
+			if ms_since_midnight > entry["start"] and ms_since_midnight <= entry["end"]:
+				basal_entry["rate"] = entry["rate"]
+				basal_entry["duration"] = entry["end"] - entry["start"] #in ms	
 		basal_entry["scheduleName"] = "standard"
 		next_time += basal_entry["duration"] / 1000
 		dfaker.append(basal_entry)
@@ -383,7 +387,15 @@ def settings(start_time, params):
 	time_in_seconds = int(start_time.strftime('%s'))
 	settings = add_common_fields('settings', settings, time_in_seconds, params)
 	settings["activeSchedule"] = "standard"
-	settings["basalSchedules"] = {"standard": [{"rate": 0.8, "start": 0}]}
+	settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0, "end": 3600000},
+								 				{"rate": 0.6, "start": 3600000, "end": 10800000},
+												{"rate": 0.65, "start": 10800000, "end": 14400000},
+												{"rate": 0.8, "start": 14400000, "end": 18000000},
+												{"rate": 0.85, "start": 18000000, "end": 28800000},
+												{"rate": 0.8, "start": 28800000, "end": 32400000},
+												{"rate": 0.75, "start": 32400000, "end": 54000000},
+												{"rate": 0.8, "start": 54000000, "end": 61200000},
+												{"rate": 0.85, "start": 61200000, "end": 86400000}]}
 	settings["bgTarget"] = [{"high": random.uniform(5.8, 6.2), 
 							 "low": random.uniform(4.4, 5.2), 
 							 "start": 0}]
@@ -416,7 +428,6 @@ wizard(w_gluc, w_carbs, w_carb_timesteps, params)
 cbg(glucose, gluc_timesteps, params)
 #add smbg values to dfaker
 smbg(glucose, gluc_timesteps, params)
-
 
 #write to json file
 file_object = open(params['file'], mode='w')
