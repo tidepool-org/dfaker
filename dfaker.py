@@ -388,11 +388,11 @@ def basal(start_time, params):
 		basal_entry = {}
 		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
 		basal_entry["deliveryType"] = "scheduled" #scheduled for now	
-		basal_rate_time = access_settings["basalSchedules"]["standard"]
-		t = datetime.strptime(basal_entry["time"], '%Y-%m-%dT%H:%M:%S.000Z')
+		basal_rate_time = access_settings["basalSchedules"]["standard"]		
+		t = datetime.strptime(basal_entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
 		ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
 		for entry in basal_rate_time:
-			if ms_since_midnight > entry["start"] and ms_since_midnight <= entry["end"]:
+			if ms_since_midnight >= entry["start"] and ms_since_midnight < entry["end"]:
 				basal_entry["rate"] = entry["rate"]
 				basal_entry["duration"] = entry["end"] - entry["start"] #in ms	
 		basal_entry["scheduleName"] = "standard"
