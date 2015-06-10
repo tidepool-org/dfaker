@@ -288,10 +288,9 @@ def add_common_fields(name, datatype, timestamp, params):
 	datatype["deviceId"] = "DemoData-123456789"
 	datatype["uploadId"] = "upid_abcdefghijklmnop"
 	datatype["id"] = str(uuid.uuid4())
-	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp))
 	datatype["timezoneOffset"] = get_offset(params)
-	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp 
-								- datatype["timezoneOffset"]*60)))
+	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp + datatype["timezoneOffset"]*60))
+	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp)))
 	return datatype
 
 def cbg(gluc, timesteps, params):
@@ -394,7 +393,7 @@ def override_wizard(carb_val):
 	override = random.randint(0,4)
 	if override == 3:
 		user_overridden_bolus = carb_val + random.randrange(-30, 30, 5)
-		if user_overridden_bolus >= 0.5:
+		if user_overridden_bolus >= 1:
 			return user_overridden_bolus
 	return False
 
@@ -408,13 +407,13 @@ def basal(start_time, params):
 		basal_entry = {}
 		basal_entry = add_common_fields('basal', basal_entry, next_time, params)
 		basal_entry["deliveryType"] = "scheduled" #scheduled for now	
-		basal_rate_time = access_settings["basalSchedules"]["standard"]		
+		schedule = access_settings["basalSchedules"]["standard"]		
 		t = datetime.strptime(basal_entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
 		ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
-		for entry in basal_rate_time:
-			if ms_since_midnight >= entry["start"] and ms_since_midnight < entry["end"]:
-				basal_entry["rate"] = entry["rate"]
-				basal_entry["duration"] = entry["end"] - entry["start"] #in ms	
+		for segment in schedule:
+			if ms_since_midnight >= segment["start"] and ms_since_midnight < segment["end"]:
+				basal_entry["rate"] = segment["rate"]
+				basal_entry["duration"] = segment["end"] - segment["start"] #in ms	
 		basal_entry["scheduleName"] = "standard"
 		next_time += basal_entry["duration"] / 1000
 		dfaker.append(basal_entry)
@@ -433,11 +432,13 @@ def settings(start_time, params):
 												{"rate": 0.75, "start": 32400000, "end": 54000000},
 												{"rate": 0.8, "start": 54000000, "end": 61200000},
 												{"rate": 0.85, "start": 61200000, "end": 86400000}]}
-	settings["bgTarget"] = [{"high": random.uniform(5.8, 6.2), 
-							 "low": random.uniform(4.4, 5.2), 
+	bgTarget_low = random.randrange(80, 120, 10)
+	bgTarget_high = random.randrange(bgTarget_low, 140, 10)
+	settings["bgTarget"] = [{"high": convert_to_mmol(bgTarget_high), 
+							 "low": convert_to_mmol(bgTarget_low), 
 							 "start": 0}]
 	settings["carbRatio"] = [ {"amount": random.randint(9, 15), "start": 0}]
-	settings["insulinSensitivity"] = [{"amount": 2.7, "start": 0}]
+	settings["insulinSensitivity"] = [{"amount": convert_to_mmol(50), "start": 0}]
 	settings["units"] = { "bg": "mg/dL","carb": "grams"}
 	dfaker.append(settings)
 
