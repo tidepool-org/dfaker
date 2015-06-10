@@ -1,3 +1,17 @@
+#usage: dfaker.py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS] [-f FILE]
+#                 [-m] [-g] [-s SMBG_FREQ]
+#
+#optional arguments:
+# -h,           --help               show this help message and exit
+# -z ZONE,      --timezone ZONE      Local timezone
+# -d DATE,      --date DATE          Date in the following format: YYYY-MM-DD
+# -t TIME,      --time TIME          Time in the following format: HH:MM
+# -n NUM_DAYS,  --num_days NUM_DAYS  Number of days to generate data
+# -f FILE,      --output_file FILE   Name of output json file
+# -m,           --minify             Minify the json file
+# -g,           --gaps               Add gaps to fake data
+# -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
+
 from datetime import datetime, timedelta, tzinfo
 import time
 from pytz import timezone
@@ -102,7 +116,6 @@ def apply_loess(params, solution):
 	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
 	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	
 	if params['gaps']:
 		result = make_gaps(params, result)
 	smoothed_time = result[:, 0]
@@ -227,6 +240,10 @@ def convert_to_mmol(iterable):
 	return [reading / conversion_factor for reading in iterable]
 
 def round_to(n, precision=0.005):
+	""" The round function can take positive or negative values
+		and round them to a certain precision.
+		In the fake data generator, only positive values are being passed into it
+	"""
 	if n >= 0:
 		correction = 0.5 
 	else:
