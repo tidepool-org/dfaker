@@ -148,7 +148,7 @@ def create_gap_list(params, time_gluc):
 	gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps	
 	gap_list = []
 	for _ in range(gaps):
-		gap_length = random.randint(6, 36) # length of gaps in 5-min segments
+		gap_length = random.randint(10, 40) # length of gaps in 5-min segments
 		start_index = random.randint(0, len(time_gluc))	
 		if start_index + gap_length > len(time_gluc):
 			end_index = len(time_gluc) - 5
