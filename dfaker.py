@@ -108,25 +108,27 @@ def apply_loess(params, solution):
 		and applies a loess smoothing regression to the data 
 		Returns numpy arrays for glucose and time values 
 	"""
-	#solving blood glucose eqn 
-	glucose = solution[:, 1]
-	time = solution[:, 2]
+	#solving for smbg values
+	smbg_gluc = solution[:, 1]
+	smbg_time = solution[:, 2]
+
+	#make gaps in cbg data, if needed
+	solution = gaps(solution)
+	#solving for cbg values 
+	cbg_gluc = solution[:, 1]
+	cbg_time = solution[:, 2]
 	#smoothing blood glucose eqn
 	lowess = sm.nonparametric.lowess
 	smoothing_distance = 1.4 #1.4 minutes
 	fraction = (smoothing_distance / (params['num_days'] * 60 * 24)) * 100
-	result = lowess(glucose, time, frac=fraction, is_sorted=True)
-	smoothed_time = result[:, 0]
-	smoothed_glucose = result[:, 1]
-	return smoothed_glucose, smoothed_time
+	result = lowess(cbg_gluc, cbg_time, frac=fraction, is_sorted=True)
+	smoothed_cbg_time = result[:, 0]
+	smoothed_cbg_gluc = result[:, 1]
+	return smoothed_cbg_gluc, smoothed_cbg_time, smbg_gluc, smbg_time
 
-def get_offset(params):
-	utc_tz = timezone('UTC')
-	local_tz = timezone(params['zone'])
-	d = params['datetime']
-	naive = datetime(d.year, d.month, d.day, d.hour, d.minute)
-	offset = int((utc_tz.localize(naive) - local_tz.localize(naive)) / timedelta(minutes=1))
-	return offset
+def get_offset(zone, date):
+	local_tz = timezone(zone)	
+	return - (24 * 60 - local_tz.utcoffset(date).seconds / 60) 
 
 def gaps(data):
 	""" Create randomized gaps in fake data if user selects the gaps option
@@ -166,7 +168,7 @@ def remove_night_smbg(gluc, timesteps):
 	""" Remove most smbg night events """
 	keep = []
 	for row in zip(gluc, timesteps):
-		hour = time.gmtime(row[1]).tm_hour
+		hour = datetime.fromtimestamp(row[1]).hour
 		night_smbg = random.randint(0, 4) #keep some random night smbg events 
 		if hour > 6 and hour < 24:
 			keep.append(row)
@@ -231,7 +233,7 @@ def remove_night_boluses(carb_time_gluc):
 	for row in carb_time_gluc:
 		time_val = row[1]
 		gluc_val = row[2]
-		hour = time.gmtime(time_val).tm_hour
+		hour = datetime.fromtimestamp(time_val).hour
 		if hour > 6 and hour < 23:
 			keep.append(row)
 		elif int(gluc_val) not in range(0,250):
@@ -288,7 +290,7 @@ def add_common_fields(name, datatype, timestamp, params):
 	datatype["deviceId"] = "DemoData-123456789"
 	datatype["uploadId"] = "upid_abcdefghijklmnop"
 	datatype["id"] = str(uuid.uuid4())
-	datatype["timezoneOffset"] = get_offset(params)
+	datatype["timezoneOffset"] = get_offset(params['zone'], datetime.fromtimestamp(timestamp))
 	datatype["deviceTime"] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(timestamp + datatype["timezoneOffset"]*60))
 	datatype["time"] = (time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp)))
 	return datatype
@@ -444,14 +446,15 @@ def settings(start_time, params):
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
-solution = gaps(solution)
+#solution = gaps(solution)
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
 					d.hour, d.minute, tzinfo=timezone(params['zone']))
 
-glucose, gluc_time = apply_loess(params, solution)
-gluc_timesteps = make_timesteps(start_time, gluc_time)
+cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(params, solution)
+cbg_timesteps = make_timesteps(start_time, cbg_time)
+smbg_timesteps = make_timesteps(start_time, smbg_time)
 
 b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time)
 
@@ -464,9 +467,9 @@ bolus(b_carbs, b_carb_timesteps, params)
 #add wizard events to dfaker
 wizard(w_gluc, w_carbs, w_carb_timesteps, params)
 #add cbg values to dfaker
-cbg(glucose, gluc_timesteps, params)
+cbg(cbg_gluc, cbg_timesteps, params)
 #add smbg values to dfaker
-smbg(glucose, gluc_timesteps, params)
+smbg(smbg_gluc, smbg_timesteps, params)
 
 #write to json file
 file_object = open(params['file'], mode='w')

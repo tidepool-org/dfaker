@@ -62,10 +62,10 @@ def stitch_func(num_days=180):
 	days_in_minutes = num_days * 24 * 60
 	sugar = random.uniform(80, 180) #start with random sugar level
 	last_carbs = random.uniform(-60, 300)
-	start_time = 0
+	next_time = 0
 	sugar_in_range = []
 	simulator_data = []
-	while start_time < days_in_minutes:
+	while next_time < days_in_minutes:
 		if int(sugar) in range(80, 195):
 			sugar_in_range.append(sugar)
 		else:
@@ -74,10 +74,10 @@ def stitch_func(num_days=180):
 		digestion = random.uniform(0.04, 0.08)
 		insulin_rate = random.uniform(0.002, 0.05)
 		minutes = random.uniform(100, 200) #change this to higher numbers for less frequent events
-		result = simulator(carbs, sugar, digestion, insulin_rate, minutes, start_time)
+		result = simulator(carbs, sugar, digestion, insulin_rate, minutes, next_time)
 		simulator_data.append(result)		
 		sugar = result[-1][1]
-		start_time += minutes
+		next_time += minutes + 5 #add 5 minutes to avoid duplicates 
 		last_carbs = carbs
 	stitched = []
 	for array in simulator_data:
