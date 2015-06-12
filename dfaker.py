@@ -354,7 +354,18 @@ def normal_bolus(value, timestamp, carb_ratio, params):
 	bolus_entry["subType"] = "normal"
 	insulin = round_to(int(value) / carb_ratio)
 	bolus_entry["normal"] = insulin
+
+	interrupt = random.randint(0,9) #interrupt 1 in 10 boluses
+	if interrupt == 1:
+		bolus_entry = interrupted_bolus(insulin, timestamp, params)
 	dfaker.append(bolus_entry)
+	return bolus_entry
+
+def interrupted_bolus(value, timestamp, params):
+	bolus_entry = {}
+	bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
+	bolus_entry["expectedNormal"] = value
+	bolus_entry["normal"] = value - random.uniform(0, value)
 	return bolus_entry
 
 def wizard(gluc, carbs, timesteps, params):
@@ -399,7 +410,7 @@ def override_wizard(carb_val):
 			return user_overridden_bolus
 	return False
 
-def basal(start_time, params):
+def scheduled_basal(start_time, params):
 	access_settings = dfaker[0]
 	next_time = int(start_time.strftime('%s')) #in seconds
 	seconds_to_add = params["num_days"] * 24 * 60 * 60
@@ -446,7 +457,6 @@ def settings(start_time, params):
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
-#solution = gaps(solution)
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
@@ -461,7 +471,7 @@ b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(
 #add settings to dfaker
 settings(start_time, params)
 #add basal to dfaker
-basal(start_time, params)
+scheduled_basal(start_time, params)
 #add bolus values to dfaker
 bolus(b_carbs, b_carb_timesteps, params)
 #add wizard events to dfaker
