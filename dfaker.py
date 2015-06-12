@@ -330,10 +330,12 @@ def bolus(carbs, timesteps, params):
     access_settings = dfaker[0]
     carb_ratio = access_settings["carbRatio"][0]["amount"]
     for value, timestamp in zip(carbs, timesteps):      
-        normal_or_square = random.randint(0, 4)
-        if normal_or_square == 3:
+        normal_or_square = random.randint(0, 9) 
+        if normal_or_square == 1 or normal_or_square == 2: #2 in 10 are dual square
             dual_square_bolus(value, timestamp, carb_ratio, params)
-        else:
+        elif normal_or_square == 3: #1 in 10 is a sqaure bolus
+            square_bolus(value, timestamp, carb_ratio, params)
+        else: #8 of 10 are normal boluses 
             normal_bolus(value, timestamp, carb_ratio, params)
 
 def dual_square_bolus(value, timestamp, carb_ratio, params):
@@ -344,8 +346,35 @@ def dual_square_bolus(value, timestamp, carb_ratio, params):
     bolus_entry["normal"] = round_to(random.uniform(insulin / 3, insulin / 2)) 
     bolus_entry["extended"] = round_to(insulin - bolus_entry["normal"]) 
     bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000) #in ms
+    
+    interrupt = random.randint(0,9) #interrupt 1 in 10 boluses
+    if interrupt != 1:
+        bolus_entry = interrupted_square_bolus(bolus_entry["normal"], bolus_entry["extended"], bolus_entry["duration"], timestamp, params)
     dfaker.append(bolus_entry)
     return bolus_entry
+
+def interrupted_square_bolus(normal, extended, duration, timestamp, params):
+    interrupt_normal = random.randint(0,1)
+    bolus_entry = {}
+    bolus_entry = add_common_fields('bolus', bolus_entry, timestamp, params)
+    bolus_entry["subType"] = "dual/square"
+    
+    if interrupt_normal:
+        bolus_entry["expectedNormal"] = normal
+        bolus_entry["normal"] = round_to(normal - random.uniform(0, normal))
+        bolus_entry["extended"] = 0
+        bolus_entry["duration"] = 0
+        bolus_entry["expectedDuration"] = duration
+        bolus_entry["expectedExtended"] = extended
+    else:
+        interruption_time = random.randrange(300000, duration, 300000)
+        rate = extended / duration 
+        bolus_entry["normal"] = normal
+        bolus_entry["expectedDuration"] = duration
+        bolus_entry["expectedExtended"] = extended
+        bolus_entry["extended"] = round_to(rate * interruption_time)
+        bolus_entry["duration"] = interruption_time
+    return bolus_entry    
 
 def square_bolus(value, timestamp, carb_ratio, params):
     bolus_entry = {}
@@ -354,6 +383,8 @@ def square_bolus(value, timestamp, carb_ratio, params):
     bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000)
     insulin = round_to(int(value) / carb_ratio)
     bolus_entry["extended"] = insulin
+    dfaker.append(bolus_entry)
+    return bolus_entry
 
 def normal_bolus(value, timestamp, carb_ratio, params):
     bolus_entry = {}
@@ -394,9 +425,11 @@ def wizard(gluc, carbs, timesteps, params):
         wizard_reading["recommended"]["net"] = (round_to(wizard_reading["recommended"]["carb"] 
                                                + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"]))
         carb_ratio = access_settings["carbRatio"][0]["amount"]
-        normal_or_square = random.randint(0, 4)
-        if normal_or_square == 3: #decide which bolus to generate 
+        normal_or_square = random.randint(0, 9)
+        if normal_or_square != 1: # or normal_or_square == 2: #decide which bolus to generate 
             bolus = dual_square_bolus
+        elif normal_or_square == 3:
+            bolus = square_bolus 
         else:
             bolus = normal_bolus
         override  = override_wizard(carb_val)
