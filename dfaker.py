@@ -399,7 +399,7 @@ def override_wizard(carb_val):
 			return user_overridden_bolus
 	return False
 
-def basal(start_time, params):
+def scheduled_basal(start_time, params):
 	access_settings = dfaker[0]
 	next_time = int(start_time.strftime('%s')) #in seconds
 	seconds_to_add = params["num_days"] * 24 * 60 * 60
@@ -412,10 +412,27 @@ def basal(start_time, params):
 		schedule = access_settings["basalSchedules"]["standard"]		
 		t = datetime.strptime(basal_entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
 		ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
+
+		last_segment = schedule[len(schedule)-1]
+		full_day = 86400000 #24 hours in ms
+		basal_entry["rate"] = schedule[0]["rate"] #set initial rate
+		initial_start = ms_since_midnight #set initial start time
 		for segment in schedule:
-			if ms_since_midnight >= segment["start"] and ms_since_midnight < segment["end"]:
-				basal_entry["rate"] = segment["rate"]
-				basal_entry["duration"] = segment["end"] - segment["start"] #in ms	
+			end = segment["start"]
+			if ms_since_midnight < segment["start"]:
+				break
+			elif ms_since_midnight >= last_segment["start"]:
+				start = last_segment["start"]
+				end = full_day
+				basal_entry["rate"] = last_segment["rate"]
+				break
+			start = segment["start"]
+			basal_entry["rate"] = segment["rate"] #update rate to next segment rate
+
+		if next_time == int(start_time.strftime('%s')):
+			basal_entry["duration"] = end - initial_start
+		else:
+			basal_entry["duration"] = end - start
 		basal_entry["scheduleName"] = "standard"
 		next_time += basal_entry["duration"] / 1000
 		dfaker.append(basal_entry)
@@ -425,15 +442,15 @@ def settings(start_time, params):
 	time_in_seconds = int(start_time.strftime('%s'))
 	settings = add_common_fields('settings', settings, time_in_seconds, params)
 	settings["activeSchedule"] = "standard"
-	settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0, "end": 3600000},
-								 				{"rate": 0.6, "start": 3600000, "end": 10800000},
-												{"rate": 0.65, "start": 10800000, "end": 14400000},
-												{"rate": 0.8, "start": 14400000, "end": 18000000},
-												{"rate": 0.85, "start": 18000000, "end": 28800000},
-												{"rate": 0.8, "start": 28800000, "end": 32400000},
-												{"rate": 0.75, "start": 32400000, "end": 54000000},
-												{"rate": 0.8, "start": 54000000, "end": 61200000},
-												{"rate": 0.85, "start": 61200000, "end": 86400000}]}
+	settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0},
+								 				{"rate": 0.6, "start": 3600000},
+												{"rate": 0.65, "start": 10800000},
+												{"rate": 0.8, "start": 14400000},
+												{"rate": 0.85, "start": 18000000},
+												{"rate": 0.8, "start": 28800000},
+												{"rate": 0.75, "start": 32400000},
+												{"rate": 0.8, "start": 54000000},
+												{"rate": 0.85, "start": 61200000}]}
 	bgTarget_low = random.randrange(80, 120, 10)
 	bgTarget_high = random.randrange(bgTarget_low, 140, 10)
 	settings["bgTarget"] = [{"high": convert_to_mmol(bgTarget_high), 
@@ -446,7 +463,6 @@ def settings(start_time, params):
 
 dfaker = [] 
 solution = cbg_equation.stitch_func(params['num_days'])
-#solution = gaps(solution)
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
@@ -461,7 +477,7 @@ b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(
 #add settings to dfaker
 settings(start_time, params)
 #add basal to dfaker
-basal(start_time, params)
+scheduled_basal(start_time, params)
 #add bolus values to dfaker
 bolus(b_carbs, b_carb_timesteps, params)
 #add wizard events to dfaker
