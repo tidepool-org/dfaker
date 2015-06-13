@@ -1,9 +1,6 @@
 import numpy as np 
-import matplotlib.pyplot as plt 
 from scipy.integrate import odeint 
 import random
-from scipy import interpolate
-import statsmodels.api as sm
 
 def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insulin_rate=0.0224, minutes=100, start_time=0):
     """Constructs a blood glucose equation using the following initial paremeters:
