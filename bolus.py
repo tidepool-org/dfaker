@@ -69,24 +69,29 @@ def bolus_or_wizard(solution):
             wizard_events.append(row)
     return bolus_events, wizard_events
 
+def get_carb_ratio(start_time, time, params):
+    access_settings = settings.settings(start_time, params)[0]
+    carb_ratio_sched = access_settings["carbRatio"]
+    carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, time, "carbRatio")
+    return carb_ratio
+
 def bolus(start_time, carbs, timesteps, params):
     bolus_data = []
-    access_settings = settings.settings(start_time, params)[0]
-    carb_ratio = access_settings["carbRatio"][0]["amount"]
     for value, timestamp in zip(carbs, timesteps):      
         normal_or_square = random.randint(0, 9) 
         if normal_or_square == 1 or normal_or_square == 2: #2 in 10 are dual square
-            bolus_data.append(dual_square_bolus(value, timestamp, carb_ratio, params))
+            bolus_data.append(dual_square_bolus(value, timestamp, start_time, params))
         elif normal_or_square == 3: #1 in 10 is a sqaure bolus
-            bolus_data.append(square_bolus(value, timestamp, carb_ratio, params))
+            bolus_data.append(square_bolus(value, timestamp, start_time, params))
         else: #8 of 10 are normal boluses 
-            bolus_data.append(normal_bolus(value, timestamp, carb_ratio, params))
+            bolus_data.append(normal_bolus(value, timestamp, start_time, params))
     return bolus_data
 
-def dual_square_bolus(value, timestamp, carb_ratio, params):
+def dual_square_bolus(value, timestamp, start_time, params):
     bolus_entry = {}
     bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, params)
     bolus_entry["subType"] = "dual/square"
+    carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], params)
     insulin = int(value) / carb_ratio
     bolus_entry["normal"] = tools.round_to(random.uniform(insulin / 3, insulin / 2)) 
     bolus_entry["extended"] = tools.round_to(insulin - bolus_entry["normal"]) 
@@ -98,19 +103,21 @@ def dual_square_bolus(value, timestamp, carb_ratio, params):
                        bolus_entry["extended"], bolus_entry["duration"], timestamp, params))
     return bolus_entry  
 
-def square_bolus(value, timestamp, carb_ratio, params):
+def square_bolus(value, timestamp, start_time, params):
     bolus_entry = {}
     bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, params)
     bolus_entry["subType"] = "square"
     bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000)
+    carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], params)
     insulin = tools.round_to(int(value) / carb_ratio)
     bolus_entry["extended"] = insulin
     return bolus_entry
 
-def normal_bolus(value, timestamp, carb_ratio, params):
+def normal_bolus(value, timestamp, start_time, params):
     bolus_entry = {}
     bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, params)
     bolus_entry["subType"] = "normal"
+    carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], params)
     insulin = tools.round_to(int(value) / carb_ratio)
     bolus_entry["normal"] = insulin
 

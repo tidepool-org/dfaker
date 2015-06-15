@@ -13,8 +13,13 @@ def wizard(start_time, gluc, carbs, timesteps, params):
         wizard_reading["bgInput"] = tools.convert_to_mmol(gluc_val)
         wizard_reading["carbInput"] = int(carb_val)
         wizard_reading["insulinOnBoard"] = 0
-        wizard_reading["insulinCarbRatio"] = access_settings["carbRatio"][0]["amount"]
-        wizard_reading["insulinSensitivity"] = access_settings["insulinSensitivity"][0]["amount"]
+        
+        
+        carb_ratio_sched, sensitivity_sched = access_settings["carbRatio"], access_settings["insulinSensitivity"]
+        sensitivity = tools.get_rate_from_settings(sensitivity_sched, wizard_reading["deviceTime"], "insulinSensitivity")
+        carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, wizard_reading["deviceTime"], "carbRatio")
+        wizard_reading["insulinSensitivity"] = sensitivity
+        wizard_reading["insulinCarbRatio"] = carb_ratio
         wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
                                         "low": access_settings["bgTarget"][0]["low"]}
         wizard_reading["payload"] = {}
@@ -23,7 +28,6 @@ def wizard(start_time, gluc, carbs, timesteps, params):
         wizard_reading["recommended"]["correction"] =  0
         wizard_reading["recommended"]["net"] = (tools.round_to(wizard_reading["recommended"]["carb"] 
                                                + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"]))
-        carb_ratio = access_settings["carbRatio"][0]["amount"]
         normal_or_square = random.randint(0, 9)
         if normal_or_square == 1 or normal_or_square == 2: #decide which type bolus to generate 
             which_bolus = bolus.dual_square_bolus
@@ -33,11 +37,11 @@ def wizard(start_time, gluc, carbs, timesteps, params):
             which_bolus = bolus.normal_bolus
         override  = override_wizard(carb_val)
         if override:
-            assosiated_bolus = which_bolus(override, timestamp, carb_ratio, params)
+            assosiated_bolus = which_bolus(override, timestamp, start_time, params)
             wizard_reading["bolus"] = assosiated_bolus["id"]
             wizard_data.append(assosiated_bolus)
         else:
-            assosiated_bolus = which_bolus(carb_val, timestamp, carb_ratio, params)
+            assosiated_bolus = which_bolus(carb_val, timestamp, start_time, params)
             wizard_reading["bolus"] = assosiated_bolus["id"]
             wizard_data.append(assosiated_bolus)
         wizard_data.append(wizard_reading)

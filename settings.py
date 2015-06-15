@@ -22,8 +22,13 @@ def settings(start_time, params):
     settings["bgTarget"] = [{"high": tools.convert_to_mmol(bgTarget_high), 
                              "low": tools.convert_to_mmol(bgTarget_low), 
                              "start": 0}]
-    settings["carbRatio"] = [ {"amount": random.randint(9, 15), "start": 0}]
-    settings["insulinSensitivity"] = [{"amount": tools.convert_to_mmol(50), "start": 0}]
+    settings["carbRatio"] = [{"amount": random.randint(9, 15), "start": 0},
+                             {"amount": random.randint(9, 15), "start": 36000000},
+                             {"amount": random.randint(9, 15), "start": 72000000}]
+    settings["insulinSensitivity"] = [{"amount": tools.convert_to_mmol(30), "start": 0},
+                                      {"amount": tools.convert_to_mmol(40), "start": 18000000},
+                                      {"amount": tools.convert_to_mmol(50), "start": 39600000},
+                                      {"amount": tools.convert_to_mmol(35), "start": 68400000}]
     settings["units"] = { "bg": "mg/dL","carb": "grams"}
     settings_data.append(settings)
     return settings_data
