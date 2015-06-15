@@ -38,6 +38,25 @@ def scheduled_basal(start_time, params):
         else:
             basal_entry["duration"] = int(total_seconds * 1000)
         basal_entry["scheduleName"] = "standard"
+       
+        if randomize_temp_basal(): #create temp basal if true
+            basal_data.append(temp_basal(basal_entry, next_time, params))
         next_time += basal_entry["duration"] / 1000
         basal_data.append(basal_entry)
     return basal_data
+
+def temp_basal(scheduled_basal, timestamp, params):
+    basal_entry = {}
+    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, params)
+    basal_entry["deliveryType"] = "temp"
+    basal_entry["duration"] = scheduled_basal["duration"]
+    basal_entry["percent"] = random.randrange(0, 80, 5) / 100
+    basal_entry["rate"] = scheduled_basal["rate"] * basal_entry["percent"]
+    basal_entry["suppressed"] = scheduled_basal
+    return basal_entry
+
+def randomize_temp_basal():
+    decidion = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
+    if decidion == 2:
+        return True
+    return False
