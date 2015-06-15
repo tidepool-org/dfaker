@@ -1,4 +1,5 @@
 from pytz import timezone
+from datetime import datetime
 
 def get_offset(zone, date):
     local_tz = timezone(zone)   
@@ -30,3 +31,33 @@ def make_timesteps(start_timestamp, timelist):
         new_time = int(epoch_ts) + int(time_item * 60) 
         timesteps.append(new_time)
     return timesteps
+
+def get_rate_from_settings(schedule, time, name):
+    """Obtains a rate or amount from settings based on time of day
+       If name is basalSchedules, returns rate as well as start and stop times
+       Otherwise, if name is carbRatio or insulinSensitivity, returns just amount
+    """
+    t = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S')
+    if name == "basalSchedules": #account for variation in naming 
+        value_name = "rate" #set initial rate
+    else:
+        value_name = "amount"
+    ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
+    last_segment = schedule[len(schedule)-1]
+    full_day = 86400000 #24 hours in ms
+    rate = schedule[0][value_name] #set initial rate
+    initial_start = ms_since_midnight #set initial start time
+    for segment in schedule:
+        end = segment["start"]
+        if ms_since_midnight < segment["start"]:
+            break
+        elif ms_since_midnight >= last_segment["start"]:
+            start = last_segment["start"]
+            end = full_day
+            rate = last_segment[value_name]
+            break
+        start = segment["start"]
+        rate = segment[value_name] #update rate to next segment rate
+    if name == "basalSchedules":
+        return rate, start, initial_start, end 
+    return rate #only rate needed for insulin sensitivity/carb ratio events

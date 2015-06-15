@@ -2,6 +2,8 @@ import random
 import common_fields 
 import settings
 from datetime import datetime, timedelta
+from pytz import timezone
+import tools
 
 def scheduled_basal(start_time, params):
     basal_data = []  
@@ -14,30 +16,27 @@ def scheduled_basal(start_time, params):
         basal_entry = {}
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, params)
         basal_entry["deliveryType"] = "scheduled" #scheduled for now    
-        schedule = access_settings["basalSchedules"]["standard"]        
-        t = datetime.strptime(basal_entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
-        ms_since_midnight = t.hour*60*60*1000 + t.minute*60*1000 + t.second*1000
+        
+        schedule = access_settings["basalSchedules"]["standard"] 
+        basal_entry["rate"], start, initial_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
+        duration = (end - start) / 1000 #in seconds
 
-        last_segment = schedule[len(schedule)-1]
-        full_day = 86400000 #24 hours in ms
-        basal_entry["rate"] = schedule[0]["rate"] #set initial rate
-        initial_start = ms_since_midnight #set initial start time
-        for segment in schedule:
-            end = segment["start"]
-            if ms_since_midnight < segment["start"]:
-                break
-            elif ms_since_midnight >= last_segment["start"]:
-                start = last_segment["start"]
-                end = full_day
-                basal_entry["rate"] = last_segment["rate"]
-                break
-            start = segment["start"]
-            basal_entry["rate"] = segment["rate"] #update rate to next segment rate
+        zone = timezone(params['zone'])
+        start_date = datetime.fromtimestamp(next_time)
+        localized_start = zone.localize(start_date)
+        end_date = datetime.fromtimestamp(next_time + duration)
+        localized_end = zone.localize(end_date)
+        offset1 = tools.get_offset(params['zone'], start_date)
+        offset2 = tools.get_offset(params['zone'], end_date)
 
+        if offset1 != offset2:
+            diff = offset2 - offset1
+            localized_end = localized_end - timedelta(minutes=diff)
+        total_seconds = (localized_end - localized_start).total_seconds()
         if next_time == int(start_time.strftime('%s')):
             basal_entry["duration"] = end - initial_start
         else:
-            basal_entry["duration"] = end - start
+            basal_entry["duration"] = int(total_seconds * 1000)
         basal_entry["scheduleName"] = "standard"
         next_time += basal_entry["duration"] / 1000
         basal_data.append(basal_entry)
