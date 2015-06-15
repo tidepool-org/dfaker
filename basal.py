@@ -16,7 +16,7 @@ def scheduled_basal(start_time, params):
         basal_entry = {}
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, params)
         basal_entry["deliveryType"] = "scheduled" #scheduled for now    
-        
+
         schedule = access_settings["basalSchedules"]["standard"] 
         basal_entry["rate"], start, initial_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds

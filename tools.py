@@ -1,9 +1,17 @@
 from pytz import timezone
-from datetime import datetime
+from datetime import datetime, timedelta 
+
+def is_dst(date, zonename):
+    tz = timezone(zonename)
+    localized_time = tz.localize(date)
+    return localized_time.dst() != timedelta(0)
 
 def get_offset(zone, date):
-    local_tz = timezone(zone)   
-    return - (24 * 60 - local_tz.utcoffset(date).seconds / 60) 
+    local_tz = timezone(zone) 
+    if is_dst(date, zone):
+        return - (24 * 60 - local_tz.utcoffset(date, is_dst=True).seconds / 60)
+    else:
+        return - (24 * 60 - local_tz.utcoffset(date, is_dst=False).seconds / 60) 
 
 def convert_to_mmol(iterable):
     conversion_factor = 18.01559
