@@ -21,8 +21,9 @@ def scheduled_basal(start_time, num_days, zonename):
         basal_entry = {}
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, zonename)
         basal_entry["deliveryType"] = "scheduled"   
+        basal_entry["scheduleName"] = "standard"
         schedule = access_settings["basalSchedules"]["standard"] 
-        basal_entry["rate"], start, initial_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
+        basal_entry["rate"], start, corrected_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds
         zone = timezone(zonename)
         start_date, end_date = datetime.fromtimestamp(next_time), datetime.fromtimestamp(next_time + duration)
@@ -32,40 +33,33 @@ def scheduled_basal(start_time, num_days, zonename):
             diff = end_offset - start_offset
             localized_end = localized_end - timedelta(minutes=diff)
         elapsed_seconds = (localized_end - localized_start).total_seconds()
-        if next_time == int(start_time.strftime('%s')):
-            basal_entry["duration"] = end - initial_start
+        if next_time == int(start_time.strftime('%s')) or start != corrected_start:
+            basal_entry["duration"] = end - corrected_start 
         else:
             basal_entry["duration"] = int(elapsed_seconds * 1000)
-        basal_entry["scheduleName"] = "standard"
-       
-        if randomize_temp_basal(): #create temp basal if true
-            basal_data.append(temp_basal(basal_entry, next_time, zonename=zonename))
-        
-        if randomize_temp_basal():
-            basal_data.append(suspended_basal(basal_entry, next_time, zonename=zonename))    
-
-        next_time += basal_entry["duration"] / 1000
         basal_data.append(basal_entry)
+
+        if randomize_temp_basal() and start_offset == end_offset: #avoid temp basal during DST change
+            randomize_start = random.randrange(300000, 3000000, 60000) #randomize start of temp basal in ms  
+            start_temp = next_time + randomize_start/1000 
+            temp_entry, temp_duration = temp_basal(basal_entry, start_temp, zonename=zonename)
+            diff = basal_entry["duration"] - randomize_start
+            basal_entry["duration"] -= diff
+            basal_data.append(temp_entry)
+            next_time += (basal_entry["duration"] / 1000) + (temp_duration / 1000)
+        else:
+            next_time += basal_entry["duration"] / 1000
     return basal_data
 
-def temp_basal(scheduled_basal, timestamp, zonename):
+def temp_basal(scheduled_basal, start_time, zonename):
     basal_entry = {}
-    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, zonename)
+    basal_entry = (common_fields.add_common_fields('basal', basal_entry, start_time, zonename)) 
     basal_entry["deliveryType"] = "temp"
-    basal_entry["duration"] = scheduled_basal["duration"] 
+    basal_entry["duration"] = random.randrange(1200000, 21600000, 600000) #20min-6hrs
     basal_entry["percent"] = random.randrange(5, 195, 10) / 100
     basal_entry["rate"] = scheduled_basal["rate"] * basal_entry["percent"]
     basal_entry["suppressed"] = scheduled_basal
-    return basal_entry
-
-def suspended_basal(scheduled_basal, timestamp, zonename):
-    basal_entry = {}
-    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, zonename)
-    basal_entry["deliveryType"] = "suspend"
-    basal_entry["duration"] = scheduled_basal["duration"]
-    basal_entry["suppressed"] = scheduled_basal
-    return basal_entry
-
+    return basal_entry, basal_entry["duration"]
 
 def randomize_temp_basal():
     decision = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
