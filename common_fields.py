@@ -4,8 +4,11 @@ import tools
 from datetime import datetime
 
 def add_common_fields(name, datatype, timestamp, zonename):
-    """Populate common fields applicable to all datatypes
-       datatype -- a dictionary for a specific data type 
+    """ Populate common fields applicable to all datatypes
+        name -- name of datatype
+        datatype -- a dictionary for a specific data type
+        timestamp -- an epoch time 
+        zonename -- name of timezone in effect 
     """
     datatype["type"] = name
     datatype["deviceId"] = "DemoData-123456789"

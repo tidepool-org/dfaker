@@ -28,6 +28,11 @@ def apply_loess(solution, num_days, gaps):
     return smoothed_cbg_gluc, smoothed_cbg_time, smbg_gluc, smbg_time
 
 def cbg(gluc, timesteps, zonename):
+    """ construct cbg events
+        gluc -- a list of glucose values at each timestep
+        timesteps -- a list of epoch times 
+        zonename -- name of timezone in effect 
+    """
     cbg_data = []
     for value, timestamp in zip(gluc, timesteps):
         cbg_reading = {}

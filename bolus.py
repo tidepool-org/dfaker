@@ -76,7 +76,14 @@ def get_carb_ratio(start_time, time, zonename):
     return carb_ratio
 
 def bolus(start_time, carbs, timesteps, zonename):
+    """ Construct bolus events 
+        start_time -- a datetime object with a timezone
+        carbs -- a list of carb events at each timestep
+        timesteps -- a list of epoch times 
+        zonename -- name of timezone in effect
+    """
     bolus_data = []
+    print(carbs)
     for value, timestamp in zip(carbs, timesteps):      
         normal_or_square = random.randint(0, 9) 
         if normal_or_square == 1 or normal_or_square == 2: #2 in 10 are dual square

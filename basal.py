@@ -6,6 +6,11 @@ from pytz import timezone
 import tools
 
 def scheduled_basal(start_time, num_days, zonename):
+    """ Construct basal events based on a basal schedule from settings
+        start_time -- a datetime object with a timezone
+        num_days -- integer reflecting total number of days over which data is generated
+        zonename -- name of timezone in effect
+    """
     basal_data = []  
     access_settings = settings.settings(start_time, zonename=zonename)[0]
     next_time = int(start_time.strftime('%s')) #in seconds

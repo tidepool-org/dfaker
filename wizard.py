@@ -5,6 +5,13 @@ import tools
 import bolus
 
 def wizard(start_time, gluc, carbs, timesteps, zonename):
+    """ Construct a wizard event
+        start_time -- a datetime object with a timezone
+        gluc -- a list of glucose values at each timestep 
+        carbs -- a list of carb events at each timestep
+        timesteps -- a list of epoch times 
+        zonename -- name of timezone in effect 
+    """
     wizard_data = []
     access_settings = settings.settings(start_time, zonename)[0]
     for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
@@ -20,7 +27,6 @@ def wizard(start_time, gluc, carbs, timesteps, zonename):
         wizard_reading["insulinCarbRatio"] = carb_ratio
         wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
                                         "low": access_settings["bgTarget"][0]["low"]}
-        wizard_reading["payload"] = {}
         wizard_reading["recommended"] = {}
         wizard_reading["recommended"]["carb"] = tools.round_to(wizard_reading["carbInput"] / wizard_reading["insulinCarbRatio"])
         wizard_reading["recommended"]["correction"] =  0
@@ -36,13 +42,13 @@ def wizard(start_time, gluc, carbs, timesteps, zonename):
         
         override  = override_wizard(carb_val)
         if override:
-            assosiated_bolus = which_bolus(override, timestamp, start_time, zonename)
-            wizard_reading["bolus"] = assosiated_bolus["id"]
-            wizard_data.append(assosiated_bolus)
+            associated_bolus = which_bolus(override, timestamp, start_time, zonename)
+            wizard_reading["bolus"] = associated_bolus["id"]
+            wizard_data.append(associated_bolus)
         else:
-            assosiated_bolus = which_bolus(carb_val, timestamp, start_time, zonename)
-            wizard_reading["bolus"] = assosiated_bolus["id"]
-            wizard_data.append(assosiated_bolus)
+            associated_bolus = which_bolus(carb_val, timestamp, start_time, zonename)
+            wizard_reading["bolus"] = associated_bolus["id"]
+            wizard_data.append(associated_bolus)
         wizard_data.append(wizard_reading)
     return wizard_data
 

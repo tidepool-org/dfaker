@@ -3,6 +3,10 @@ import common_fields
 import tools
 
 def settings(start_time, zonename):
+    """ Construct a settings object
+        start_time -- a datetime object with a timezone
+        zonename -- name of timezone in effect
+    """
     settings_data = []
     settings = {}
     time_in_seconds = int(start_time.strftime('%s'))

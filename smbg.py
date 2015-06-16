@@ -31,6 +31,12 @@ def randomize_smbg(time_gluc, stick_freq):
     return keep
 
 def smbg(gluc, timesteps, stick_freq, zonename):
+    """ construct smbg events
+        gluc -- a list of glucose values at each timestep
+        timesteps -- a list of epoch times 
+        stick_freq -- an integer reflecting number of fingersticks per day
+        zonename -- name of timezone in effect 
+    """
     smbg_data = []
     remove_night = remove_night_smbg(gluc, timesteps)   
     time_gluc = randomize_smbg(remove_night, stick_freq)
@@ -38,11 +44,12 @@ def smbg(gluc, timesteps, stick_freq, zonename):
         randomize_time = random.randrange(-5000, 5000)
         smbg_reading = {}
         smbg_reading = common_fields.add_common_fields('smbg', smbg_reading, timestamp, zonename)
-        smbg_reading["value"] = tools.convert_to_mmol(value) + random.uniform(-1.5, 1.5) #in mmol/L
-        if value >= 600:
+        #add a randomized value to smbg value so cbg and smbg are not always identical
+        smbg_reading["value"] = tools.convert_to_mmol(value) + random.uniform(-1.5, 1.5) 
+        if value > 600:
             smbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 600, "value": "high"}]
             smbg_reading["value"] = tools.convert_to_mmol(601)
-        elif value <= 20:
+        elif value < 20:
             smbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 20, "value": "low"}]
             smbg_reading["value"] = tools.convert_to_mmol(19)        
         smbg_reading["units"] = "mmol/L"
