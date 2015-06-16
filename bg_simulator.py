@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import odeint 
 import random
 
-def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insulin_rate=0.0224, minutes=100, start_time=0):
+def simulator(initial_carbs, initial_sugar, digestion_rate, insulin_rate, minutes, start_time):
     """Constructs a blood glucose equation using the following initial paremeters:
         initial_carbs -- the intake amount of carbs 
         initial_sugar -- the baseline value of glucose at time zero
@@ -55,7 +55,7 @@ def assign_carbs(sugar, last_carbs, sugar_in_range):
         carbs = random.triangular(-50, 100, 60)
     return carbs
 
-def stitch_func(num_days=180):
+def simulate(num_days=180):
     days_in_minutes = num_days * 24 * 60
     sugar = random.uniform(80, 180) #start with random sugar level
     last_carbs = random.uniform(-60, 300)

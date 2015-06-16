@@ -13,12 +13,11 @@
 # -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
 
 from datetime import datetime
-from pytz import timezone
 import pytz
 import json
 import argparse 
 import sys
-import cbg_equation
+import bg_simulator
 import bolus
 import wizard
 import settings
@@ -28,7 +27,7 @@ import basal
 import tools
 
 params = {
-    'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'),  #default datetime settings
+    'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'), #default datetime settings
     'zone' : 'US/Pacific', #default zone
     'num_days' : 10, #default number of days to generate data for
     'file' : 'device-data.json', #default json file name 
@@ -106,11 +105,11 @@ args = parser.parse_args()
 parse(args, params)
 
 dfaker = [] 
-solution = cbg_equation.stitch_func(params['num_days'])
+solution = bg_simulator.simulate(params['num_days'])
 
 d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
-                    d.hour, d.minute, tzinfo=timezone(params['zone']))
+                    d.hour, d.minute, tzinfo=pytz.timezone(params['zone']))
 
 cbg_gluc, cbg_time, smbg_gluc, smbg_time = cbg.apply_loess(params, solution)
 cbg_timesteps = tools.make_timesteps(start_time, cbg_time)
