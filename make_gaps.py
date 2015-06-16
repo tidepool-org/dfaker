@@ -1,24 +1,24 @@
 import random
 import numpy as np
 
-def gaps(data, params):
+def gaps(data, num_days, gaps):
     """ Create randomized gaps in fake data if user selects the gaps option
         Returns data with gaps if gaps are selected, otherwise returns full data set 
     """
-    if params["gaps"]:
+    if gaps:
         solution_list = solution.tolist()
-        gap_list = create_gap_list(params, solution)
+        gap_list = create_gap_list(solution, num_days=num_days)
         for gap in gap_list:
             solution_list = remove_gaps(solution_list, gap[0], gap[1])
         new_solution = np.array(solution_list)
         return new_solution
     return data
 
-def create_gap_list(params, time_gluc):
+def create_gap_list(time_gluc, num_days):
     """ Returns sorted list of lists that represent indecies to be removed.
         Each inner list is a two element list containing a start index and an end index
     """
-    gaps = random.randint(1 * params['num_days'], 3 * params['num_days']) # amount of gaps  
+    gaps = random.randint(1 * num_days, 3 * num_days) # amount of gaps  
     gap_list = []
     for _ in range(gaps):
         gap_length = random.randint(10, 40) # length of gaps in 5-min segments

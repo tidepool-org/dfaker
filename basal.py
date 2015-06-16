@@ -5,24 +5,24 @@ from datetime import datetime, timedelta
 from pytz import timezone
 import tools
 
-def scheduled_basal(start_time, params):
+def scheduled_basal(start_time, num_days, zonename):
     basal_data = []  
-    access_settings = settings.settings(start_time, params)[0]
+    access_settings = settings.settings(start_time, zonename=zonename)[0]
     next_time = int(start_time.strftime('%s')) #in seconds
-    seconds_to_add = params["num_days"] * 24 * 60 * 60
+    seconds_to_add = num_days * 24 * 60 * 60
     end_date = start_time + timedelta(seconds=seconds_to_add)
     end_time = int(end_date.strftime('%s'))
     while next_time < end_time:
         basal_entry = {}
-        basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, params)
+        basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, zonename)
         basal_entry["deliveryType"] = "scheduled"   
         schedule = access_settings["basalSchedules"]["standard"] 
         basal_entry["rate"], start, initial_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds
-        zone = timezone(params['zone'])
+        zone = timezone(zonename)
         start_date, end_date = datetime.fromtimestamp(next_time), datetime.fromtimestamp(next_time + duration)
         localized_start, localized_end = zone.localize(start_date), zone.localize(end_date)
-        start_offset, end_offset = tools.get_offset(params['zone'], start_date), tools.get_offset(params['zone'], end_date)
+        start_offset, end_offset = tools.get_offset(zonename, start_date), tools.get_offset(zonename, end_date)
         if start_offset != end_offset:
             diff = end_offset - start_offset
             localized_end = localized_end - timedelta(minutes=diff)
@@ -34,18 +34,18 @@ def scheduled_basal(start_time, params):
         basal_entry["scheduleName"] = "standard"
        
         if randomize_temp_basal(): #create temp basal if true
-            basal_data.append(temp_basal(basal_entry, next_time, params))
+            basal_data.append(temp_basal(basal_entry, next_time, zonename=zonename))
         
         if randomize_temp_basal():
-            basal_data.append(suspended_basal(basal_entry, next_time, params))    
+            basal_data.append(suspended_basal(basal_entry, next_time, zonename=zonename))    
 
         next_time += basal_entry["duration"] / 1000
         basal_data.append(basal_entry)
     return basal_data
 
-def temp_basal(scheduled_basal, timestamp, params):
+def temp_basal(scheduled_basal, timestamp, zonename):
     basal_entry = {}
-    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, params)
+    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, zonename)
     basal_entry["deliveryType"] = "temp"
     basal_entry["duration"] = scheduled_basal["duration"] 
     basal_entry["percent"] = random.randrange(0, 80, 5) / 100
@@ -53,9 +53,9 @@ def temp_basal(scheduled_basal, timestamp, params):
     basal_entry["suppressed"] = scheduled_basal
     return basal_entry
 
-def suspended_basal(scheduled_basal, timestamp, params):
+def suspended_basal(scheduled_basal, timestamp, zonename):
     basal_entry = {}
-    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, params)
+    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, zonename)
     basal_entry["deliveryType"] = "suspend"
     basal_entry["duration"] = scheduled_basal["duration"]
     basal_entry["suppressed"] = scheduled_basal

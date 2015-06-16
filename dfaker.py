@@ -111,24 +111,24 @@ d = params['datetime']
 start_time = datetime(d.year, d.month, d.day, 
                     d.hour, d.minute, tzinfo=pytz.timezone(params['zone']))
 
-cbg_gluc, cbg_time, smbg_gluc, smbg_time = cbg.apply_loess(params, solution)
+cbg_gluc, cbg_time, smbg_gluc, smbg_time = cbg.apply_loess(solution, num_days=params['num_days'], gaps=params['gaps'])
 cbg_timesteps = tools.make_timesteps(start_time, cbg_time)
 smbg_timesteps = tools.make_timesteps(start_time, smbg_time)
 
 b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = bolus.generate_boluses(solution, start_time)
 
 #make settings 
-settings_data = settings.settings(start_time, params)
+settings_data = settings.settings(start_time, zonename=params['zone'])
 #make basal values
-basal_data = basal.scheduled_basal(start_time, params)
+basal_data = basal.scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
 #make bolus values 
-bolus_data = bolus.bolus(start_time, b_carbs, b_carb_timesteps, params)
+bolus_data = bolus.bolus(start_time, b_carbs, b_carb_timesteps, zonename=params['zone'])
 #make wizard events
-wizard_data = wizard.wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, params)
+wizard_data = wizard.wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, zonename=params['zone'])
 #make cbg values 
-cbg_data = cbg.cbg(cbg_gluc, cbg_timesteps, params)
+cbg_data = cbg.cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
 #make smbg values 
-smbg_data = smbg.smbg(smbg_gluc, smbg_timesteps, params)
+smbg_data = smbg.smbg(smbg_gluc, smbg_timesteps, stick_freq=params['smbg_freq'], zonename=params['zone'])
 
 dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data
 

@@ -2,11 +2,11 @@ import random
 import common_fields
 import tools
 
-def settings(start_time, params):
+def settings(start_time, zonename):
     settings_data = []
     settings = {}
     time_in_seconds = int(start_time.strftime('%s'))
-    settings = common_fields.add_common_fields('settings', settings, time_in_seconds, params)
+    settings = common_fields.add_common_fields('settings', settings, time_in_seconds, zonename)
     settings["activeSchedule"] = "standard"
     settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0},
                                                 {"rate": 0.6, "start": 3600000},
