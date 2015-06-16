@@ -15,28 +15,22 @@ def scheduled_basal(start_time, params):
     while next_time < end_time:
         basal_entry = {}
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, params)
-        basal_entry["deliveryType"] = "scheduled" #scheduled for now    
-
+        basal_entry["deliveryType"] = "scheduled"   
         schedule = access_settings["basalSchedules"]["standard"] 
         basal_entry["rate"], start, initial_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds
-
         zone = timezone(params['zone'])
-        start_date = datetime.fromtimestamp(next_time)
-        localized_start = zone.localize(start_date)
-        end_date = datetime.fromtimestamp(next_time + duration)
-        localized_end = zone.localize(end_date)
-        offset1 = tools.get_offset(params['zone'], start_date)
-        offset2 = tools.get_offset(params['zone'], end_date)
-
-        if offset1 != offset2:
-            diff = offset2 - offset1
+        start_date, end_date = datetime.fromtimestamp(next_time), datetime.fromtimestamp(next_time + duration)
+        localized_start localized_end = zone.localize(start_date), zone.localize(end_date)
+        start_offset, end_offset = tools.get_offset(params['zone'], start_date), tools.get_offset(params['zone'], end_date)
+        if start_offset != end_offset:
+            diff = end_offset - start_offset
             localized_end = localized_end - timedelta(minutes=diff)
-        total_seconds = (localized_end - localized_start).total_seconds()
+        elapsed_seconds = (localized_end - localized_start).total_seconds()
         if next_time == int(start_time.strftime('%s')):
             basal_entry["duration"] = end - initial_start
         else:
-            basal_entry["duration"] = int(total_seconds * 1000)
+            basal_entry["duration"] = int(elapsed_seconds * 1000)
         basal_entry["scheduleName"] = "standard"
        
         if randomize_temp_basal(): #create temp basal if true
