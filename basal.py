@@ -69,6 +69,6 @@ def suspended_basal(scheduled_basal, timestamp, zonename):
 
 def randomize_temp_basal():
     decision = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
-    if decidion == 2:
+    if decision == 2:
         return True
     return False
