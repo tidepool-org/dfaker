@@ -1,13 +1,13 @@
 from pytz import timezone
 from datetime import datetime, timedelta 
 
-def is_dst(date, zonename):
-    tz = timezone(zonename)
-    localized_time = tz.localize(date)
+def is_dst(zonename, date):
+    local_tz = timezone(zonename)
+    localized_time = local_tz.localize(date)
     return localized_time.dst() != timedelta(0)
 
-def get_offset(zone, date):
-    local_tz = timezone(zone) 
+def get_offset(zonename, date):
+    local_tz = timezone(zonename) 
     if is_dst(date, zone):
         return - (24 * 60 - local_tz.utcoffset(date, is_dst=True).seconds / 60)
     else:
