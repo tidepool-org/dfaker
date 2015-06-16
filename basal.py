@@ -21,7 +21,7 @@ def scheduled_basal(start_time, params):
         duration = (end - start) / 1000 #in seconds
         zone = timezone(params['zone'])
         start_date, end_date = datetime.fromtimestamp(next_time), datetime.fromtimestamp(next_time + duration)
-        localized_start localized_end = zone.localize(start_date), zone.localize(end_date)
+        localized_start, localized_end = zone.localize(start_date), zone.localize(end_date)
         start_offset, end_offset = tools.get_offset(params['zone'], start_date), tools.get_offset(params['zone'], end_date)
         if start_offset != end_offset:
             diff = end_offset - start_offset
@@ -35,6 +35,10 @@ def scheduled_basal(start_time, params):
        
         if randomize_temp_basal(): #create temp basal if true
             basal_data.append(temp_basal(basal_entry, next_time, params))
+        
+        if randomize_temp_basal():
+            basal_data.append(suspended_basal(basal_entry, next_time, params))    
+
         next_time += basal_entry["duration"] / 1000
         basal_data.append(basal_entry)
     return basal_data
@@ -43,11 +47,20 @@ def temp_basal(scheduled_basal, timestamp, params):
     basal_entry = {}
     basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, params)
     basal_entry["deliveryType"] = "temp"
-    basal_entry["duration"] = scheduled_basal["duration"]
+    basal_entry["duration"] = scheduled_basal["duration"] 
     basal_entry["percent"] = random.randrange(0, 80, 5) / 100
     basal_entry["rate"] = scheduled_basal["rate"] * basal_entry["percent"]
     basal_entry["suppressed"] = scheduled_basal
     return basal_entry
+
+def suspended_basal(scheduled_basal, timestamp, params):
+    basal_entry = {}
+    basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, params)
+    basal_entry["deliveryType"] = "suspend"
+    basal_entry["duration"] = scheduled_basal["duration"]
+    basal_entry["suppressed"] = scheduled_basal
+    return basal_entry
+
 
 def randomize_temp_basal():
     decidion = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
