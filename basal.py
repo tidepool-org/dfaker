@@ -53,7 +53,7 @@ def temp_basal(scheduled_basal, timestamp, zonename):
     basal_entry = common_fields.add_common_fields('basal', basal_entry, timestamp, zonename)
     basal_entry["deliveryType"] = "temp"
     basal_entry["duration"] = scheduled_basal["duration"] 
-    basal_entry["percent"] = random.randrange(0, 80, 5) / 100
+    basal_entry["percent"] = random.randrange(5, 195, 10) / 100
     basal_entry["rate"] = scheduled_basal["rate"] * basal_entry["percent"]
     basal_entry["suppressed"] = scheduled_basal
     return basal_entry
@@ -68,7 +68,7 @@ def suspended_basal(scheduled_basal, timestamp, zonename):
 
 
 def randomize_temp_basal():
-    decidion = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
+    decision = random.randint(0,9) #1 in 10 scheduled basals is overridden with a temp basal
     if decidion == 2:
         return True
     return False

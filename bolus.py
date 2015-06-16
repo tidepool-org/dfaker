@@ -56,7 +56,7 @@ def remove_night_boluses(carb_time_gluc):
     return np_keep
 
 def bolus_or_wizard(solution):
-    """Randomely decide when to generte wizards events that are linked with boluses 
+    """Randomly decide when to generte wizards events that are linked with boluses 
        and when to have plain boluses.
        About 2 out of 6 events will be plain boluses
     """

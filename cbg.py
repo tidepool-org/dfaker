@@ -39,10 +39,10 @@ def cbg(gluc, timesteps, zonename):
         cbg_reading = common_fields.add_common_fields('cbg', cbg_reading, timestamp, zonename)
         cbg_reading["value"] = tools.convert_to_mmol(value)
         cbg_reading["units"] = "mmol/L"
-        if value >= 400:
+        if value > 400:
             cbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 400, "value": "high"}]
             cbg_reading["value"] = tools.convert_to_mmol(401)
-        elif value <= 40:
+        elif value < 40:
             cbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 40, "value": "low"}]
             cbg_reading["value"] = tools.convert_to_mmol(39)
         cbg_data.append(cbg_reading)
