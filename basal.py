@@ -4,6 +4,7 @@ import settings
 from datetime import datetime, timedelta
 from pytz import timezone
 import tools
+from device_meta import suspend_pump, device_meta
 
 def scheduled_basal(start_time, num_days, zonename):
     """ Construct basal events based on a basal schedule from settings
@@ -11,7 +12,7 @@ def scheduled_basal(start_time, num_days, zonename):
         num_days -- integer reflecting total number of days over which data is generated
         zonename -- name of timezone in effect
     """
-    basal_data = []  
+    basal_data, pump_suspended = [], []  
     access_settings = settings.settings(start_time, zonename=zonename)[0]
     next_time = int(start_time.strftime('%s')) #in seconds
     seconds_to_add = num_days * 24 * 60 * 60
@@ -38,7 +39,7 @@ def scheduled_basal(start_time, num_days, zonename):
         else:
             basal_entry["duration"] = int(elapsed_seconds * 1000)
         basal_data.append(basal_entry)
-
+       
         if randomize_temp_basal() and start_offset == end_offset: #avoid temp basal during DST change
             randomize_start = random.randrange(300000, 3000000, 60000) #randomize start of temp basal in ms  
             start_temp = next_time + randomize_start/1000 
@@ -47,9 +48,17 @@ def scheduled_basal(start_time, num_days, zonename):
             basal_entry["duration"] -= diff
             basal_data.append(temp_entry)
             next_time += (basal_entry["duration"] / 1000) + (temp_duration / 1000)
+        elif suspend_pump() and start_offset == end_offset:
+            basal_entry["deliveryType"] = "suspend" 
+            del basal_entry["rate"]
+            meta_entry, suspend_duration = device_meta(next_time, zonename)
+            basal_data.append(meta_entry)
+            basal_entry["duration"] = suspend_duration
+            pump_suspended.append([next_time, next_time + basal_entry["duration"]/1000]) #keep track of start/end times for suspension 
+            next_time += basal_entry["duration"] / 1000 
         else:
             next_time += basal_entry["duration"] / 1000
-    return basal_data
+    return basal_data, pump_suspended
 
 def temp_basal(scheduled_basal, start_time, zonename):
     basal_entry = {}
