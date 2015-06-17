@@ -92,52 +92,56 @@ def parse(args, params):
             print('Invalid frequency: {:s}. Please choose between high, average and low'.format(args.smbg_freq))
             sys.exit(1)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-z', '--timezone', dest='zone', help='Local timezone')
-parser.add_argument('-d', '--date', dest='date', help='Date in the following format: YYYY-MM-DD')
-parser.add_argument('-t', '--time', dest='time', help='Time in the following format: HH:MM')
-parser.add_argument('-n', '--num_days', dest='num_days', help='Number of days to generate data')
-parser.add_argument('-f', '--output_file', dest='file', help='Name of output json file')
-parser.add_argument('-m', '--minify', dest='minify', action='store_true', help='Minify the json file')
-parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
-parser.add_argument('-s', '--smbg', dest='smbg_freq', help='Freqency of fingersticks a day: high, average or low')
-args = parser.parse_args()
-parse(args, params)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-z', '--timezone', dest='zone', help='Local timezone')
+    parser.add_argument('-d', '--date', dest='date', help='Date in the following format: YYYY-MM-DD')
+    parser.add_argument('-t', '--time', dest='time', help='Time in the following format: HH:MM')
+    parser.add_argument('-n', '--num_days', dest='num_days', help='Number of days to generate data')
+    parser.add_argument('-f', '--output_file', dest='file', help='Name of output json file')
+    parser.add_argument('-m', '--minify', dest='minify', action='store_true', help='Minify the json file')
+    parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
+    parser.add_argument('-s', '--smbg', dest='smbg_freq', help='Freqency of fingersticks a day: high, average or low')
+    args = parser.parse_args()
+    parse(args, params)
 
-dfaker = [] 
-solution = bg_simulator.simulate(params['num_days'])
+    dfaker = [] 
+    solution = bg_simulator.simulate(params['num_days'])
 
-d = params['datetime']
-start_time = datetime(d.year, d.month, d.day, 
-                    d.hour, d.minute, tzinfo=pytz.timezone(params['zone']))
+    d = params['datetime']
+    start_time = datetime(d.year, d.month, d.day, 
+                        d.hour, d.minute, tzinfo=pytz.timezone(params['zone']))
 
-cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(solution, num_days=params['num_days'], gaps=params['gaps'])
-cbg_timesteps = tools.make_timesteps(start_time, cbg_time)
-smbg_timesteps = tools.make_timesteps(start_time, smbg_time)
+    cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(solution, num_days=params['num_days'], gaps=params['gaps'])
+    cbg_timesteps = tools.make_timesteps(start_time, cbg_time)
+    smbg_timesteps = tools.make_timesteps(start_time, smbg_time)
 
-b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time)
+    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time)
 
-#make settings 
-settings_data = settings(start_time, zonename=params['zone'])
-#make basal values
-basal_data = scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
-#make bolus values 
-bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, zonename=params['zone'])
-#make wizard events
-wizard_data = wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, zonename=params['zone'])
-#make cbg values 
-cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
-#make smbg values 
-smbg_data = smbg(smbg_gluc, smbg_timesteps, stick_freq=params['smbg_freq'], zonename=params['zone'])
+    #make settings 
+    settings_data = settings(start_time, zonename=params['zone'])
+    #make basal values
+    basal_data = scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
+    #make bolus values 
+    bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, zonename=params['zone'])
+    #make wizard events
+    wizard_data = wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, zonename=params['zone'])
+    #make cbg values 
+    cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
+    #make smbg values 
+    smbg_data = smbg(smbg_gluc, smbg_timesteps, stick_freq=params['smbg_freq'], zonename=params['zone'])
 
-dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data
+    dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data
 
-#write to json file
-file_object = open(params['file'], mode='w')
-if params['minify']: #for most compact file: separators=(',', ':')
-    json.dump(dfaker, fp=file_object, sort_keys=True, separators=(',', ':'))
-else:
-    json.dump(dfaker, fp=file_object, sort_keys=True, indent=4) 
-file_object.close()
+    #write to json file
+    file_object = open(params['file'], mode='w')
+    if params['minify']: #for most compact file: separators=(',', ':')
+        json.dump(dfaker, fp=file_object, sort_keys=True, separators=(',', ':'))
+    else:
+        json.dump(dfaker, fp=file_object, sort_keys=True, indent=4) 
+    file_object.close()
+
+if __name__ == '__main__':
+    main()
 
 sys.exit(0)
