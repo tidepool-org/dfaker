@@ -6,8 +6,8 @@ def gaps(data, num_days, gaps):
         Returns data with gaps if gaps are selected, otherwise returns full data set 
     """
     if gaps:
-        solution_list = solution.tolist()
-        gap_list = create_gap_list(solution, num_days=num_days)
+        solution_list = data.tolist()
+        gap_list = create_gap_list(data, num_days=num_days)
         for gap in gap_list:
             solution_list = remove_gaps(solution_list, gap[0], gap[1])
         new_solution = np.array(solution_list)
