@@ -26,16 +26,6 @@ from smbg import smbg
 from basal import scheduled_basal
 import tools
 
-params = {
-    'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'), #default datetime settings
-    'zone' : 'US/Pacific', #default zone
-    'num_days' : 10, #default number of days to generate data for
-    'file' : 'device-data.json', #default json file name 
-    'minify' : False, #compact storage option false by default 
-    'gaps' : False, #randomized gaps in data, off by default 
-    'smbg_freq' : 6 #default number of fingersticks per day
-}
-
 def parse(args, params):
     if args.date:
         try:
@@ -93,6 +83,16 @@ def parse(args, params):
             sys.exit(1)
 
 def main():
+    params = {
+        'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'), #default datetime settings
+        'zone' : 'US/Pacific', #default zone
+        'num_days' : 10, #default number of days to generate data for
+        'file' : 'device-data.json', #default json file name 
+        'minify' : False, #compact storage option false by default 
+        'gaps' : False, #randomized gaps in data, off by default 
+        'smbg_freq' : 6 #default number of fingersticks per day
+    }
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', '--timezone', dest='zone', help='Local timezone')
     parser.add_argument('-d', '--date', dest='date', help='Date in the following format: YYYY-MM-DD')
