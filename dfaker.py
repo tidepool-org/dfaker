@@ -88,7 +88,7 @@ def main():
         'zone' : 'US/Pacific', #default zone
         'num_days' : 10, #default number of days to generate data for
         'file' : 'device-data.json', #default json file name 
-        'minify' : False, #compact storage coption false by default 
+        'minify' : False, #compact storage option false by default 
         'gaps' : False, #randomized gaps in data, off by default 
         'smbg_freq' : 6 #default number of fingersticks per day
     }

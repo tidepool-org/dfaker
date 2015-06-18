@@ -58,7 +58,6 @@ def scheduled_basal(start_time, num_days, zonename):
             next_time += basal_entry["duration"] / 1000 
         else:
             next_time += basal_entry["duration"] / 1000
-    #print(basal_data)
     return basal_data, pump_suspended
 
 def temp_basal(scheduled_basal, start_time, zonename):
