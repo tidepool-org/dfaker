@@ -4,7 +4,7 @@ import common_fields
 import tools
 from bolus import square_bolus, normal_bolus, dual_square_bolus, check_bolus_time
 
-def wizard(start_time, gluc, carbs, timesteps, basal_data, no_wizard, zonename):
+def wizard(start_time, gluc, carbs, timesteps, basal_data, bolus_data, no_wizard, zonename):
     """ Construct a wizard event
         start_time -- a datetime object with a timezone
         gluc -- a list of glucose values at each timestep 
@@ -17,13 +17,16 @@ def wizard(start_time, gluc, carbs, timesteps, basal_data, no_wizard, zonename):
     """
     wizard_data = []
     access_settings = settings.settings(start_time, zonename)[0]
+
+    iob_dict = tools.creare_iob_dict(bolus_data, access_settings["actionTime"])
+
     for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
         if check_bolus_time(timestamp, no_wizard):    
             wizard_reading = {}
             wizard_reading = common_fields.add_common_fields('wizard', wizard_reading, timestamp, zonename)
             wizard_reading["bgInput"] = tools.convert_to_mmol(gluc_val)
             wizard_reading["carbInput"] = int(carb_val)
-            iob = tools.insulin_on_board(basal_data, access_settings["actionTime"], int(timestamp)) 
+            iob = tools.bolus_insulin_on_board(iob_dict, bolus_data, access_settings["actionTime"], int(timestamp))
             wizard_reading["insulinOnBoard"] = tools.convert_to_mmol(iob)  
             carb_ratio_sched, sensitivity_sched = access_settings["carbRatio"], access_settings["insulinSensitivity"]
             sensitivity = tools.get_rate_from_settings(sensitivity_sched, wizard_reading["deviceTime"], "insulinSensitivity")
@@ -54,6 +57,8 @@ def wizard(start_time, gluc, carbs, timesteps, basal_data, no_wizard, zonename):
                 associated_bolus = which_bolus(carb_val, timestamp, start_time, no_wizard, zonename)
                 wizard_reading["bolus"] = associated_bolus["id"]
                 wizard_data.append(associated_bolus)
+            
+            iob_dict = tools.update_iob_bolus_dict(iob_dict, [associated_bolus], access_settings["actionTime"])
             wizard_data.append(wizard_reading)
     return wizard_data
 

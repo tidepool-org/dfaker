@@ -125,7 +125,7 @@ def main():
     #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
     #make wizard events
-    wizard_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, basal_data=basal_data,
+    wizard_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, basal_data=basal_data, bolus_data=bolus_data,
                          no_wizard=pump_suspended, zonename=params['zone']))
     #make cbg values 
     cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
