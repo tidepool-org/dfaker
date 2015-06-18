@@ -23,7 +23,7 @@ def wizard(start_time, gluc, carbs, timesteps, basal_data, no_wizard, zonename):
             wizard_reading = common_fields.add_common_fields('wizard', wizard_reading, timestamp, zonename)
             wizard_reading["bgInput"] = tools.convert_to_mmol(gluc_val)
             wizard_reading["carbInput"] = int(carb_val)
-            iob = tools.insulin_on_board(basal_data, action_time=access_settings["actionTime"], int(timestamp))
+            iob = tools.insulin_on_board(basal_data, access_settings["actionTime"], int(timestamp)) 
             wizard_reading["insulinOnBoard"] = tools.convert_to_mmol(iob)  
             carb_ratio_sched, sensitivity_sched = access_settings["carbRatio"], access_settings["insulinSensitivity"]
             sensitivity = tools.get_rate_from_settings(sensitivity_sched, wizard_reading["deviceTime"], "insulinSensitivity")

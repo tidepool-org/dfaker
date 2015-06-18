@@ -81,15 +81,15 @@ def format_basal_for_wizard(basal_data):
             duration = basal_entry["duration"]/1000/60 #in minutes
             str_time = basal_entry["deviceTime"]
             start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
-            total_insulin_delivered = rate * (duration/60)
-            num_segments = duration / 5 
+            total_insulin_delivered = rate * (duration/60) 
+            num_segments = duration / 5 #5 minute segments 
             insulin_per_segment = total_insulin_delivered / num_segments
         next_time = int(start_time.strftime('%s')) #in seconds
         end_date = start_time + timedelta(minutes=duration)
         end_time = int(end_date.strftime('%s'))
         while next_time < end_time:
             time_vals.append([next_time, insulin_per_segment])
-            next_time += 5 *60 
+            next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
     return time_vals
 
 def calculate_insulin_on_board(basal_data, action_time):
@@ -98,24 +98,24 @@ def calculate_insulin_on_board(basal_data, action_time):
     iob_dict = {} #insulin on board dict sorted by time values as keys
     for time_basal in time_vals:
         remaining_time = action_time * 60 #in minutes
-        step = 0
+        step = 0 
         time = time_basal[0]
         initial_value = time_basal[1]
         slope = initial_value / action_time
-        formula = initial_value - slope * step #formula
+        iob_amount = initial_value - slope * step #linear decay equation to calculate IOB at any time 
         if time not in iob_dict:
-            iob_dict[time] = formula
+            iob_dict[time] = iob_amount
         else: 
-            iob_dict[time] += formula
-        while remaining_time > 0:
+            iob_dict[time] += iob_amount
+        while remaining_time > 0: #continue to calculate iob values until complete decay
             step += 0.08333333333333333 #5 min in hours
-            time -= 5 * 60  
-            formula = initial_value - slope * step
+            time += 5 * 60 
+            iob_amount = initial_value - slope * step
             if time not in iob_dict:
-                iob_dict[time] = formula
+                iob_dict[time] = iob_amount
             else: 
-                iob_dict[time] += formula
-            remaining_time -= 5  
+                iob_dict[time] += iob_amount
+            remaining_time -= 5 #subtract 5 minutes from remaining time 
     return iob_dict
 
 def insulin_on_board(basal_data, action_time, timestamp):
