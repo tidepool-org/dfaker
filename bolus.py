@@ -153,6 +153,7 @@ def normal_bolus(value, timestamp, start_time, no_bolus, zonename):
 def interrupted_bolus(value, timestamp, zonename):
     bolus_entry = {}
     bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, zonename)
+    bolus_entry["subType"] = "normal"
     bolus_entry["expectedNormal"] = value
     bolus_entry["normal"] = tools.round_to(value - random.uniform(0, value))
     return bolus_entry
