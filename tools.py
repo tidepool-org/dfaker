@@ -69,3 +69,60 @@ def get_rate_from_settings(schedule, time, name):
     if name == "basalSchedules":
         return rate, start, initial_start, end 
     return rate #only rate needed for insulin sensitivity/carb ratio events
+
+def format_basal_for_wizard(basal_data):
+    """ Retrieve rates, times and duration values from basal data to generate IOB values
+        Returns a list of time-basal lists 
+    """
+    time_vals = []
+    for basal_entry in basal_data:
+        if basal_entry['type'] == 'basal' and basal_entry['deliveryType'] != 'suspend':
+            rate = basal_entry["rate"] #unit per hour
+            duration = basal_entry["duration"]/1000/60 #in minutes
+            str_time = basal_entry["deviceTime"]
+            start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
+            total_insulin_delivered = rate * (duration/60)
+            num_segments = duration / 5 
+            insulin_per_segment = total_insulin_delivered / num_segments
+        next_time = int(start_time.strftime('%s')) #in seconds
+        end_date = start_time + timedelta(minutes=duration)
+        end_time = int(end_date.strftime('%s'))
+        while next_time < end_time:
+            time_vals.append([next_time, insulin_per_segment])
+            next_time += 5 *60 
+    return time_vals
+
+def calculate_insulin_on_board(basal_data, action_time):
+    """ Return a dictionary with insulin on board values for every timestamp in basal_data"""
+    time_vals = format_basal_for_wizard(basal_data)
+    iob_dict = {} #insulin on board dict sorted by time values as keys
+    for time_basal in time_vals:
+        remaining_time = action_time * 60 #in minutes
+        step = 0
+        time = time_basal[0]
+        initial_value = time_basal[1]
+        slope = initial_value / action_time
+        formula = initial_value - slope * step #formula
+        if time not in iob_dict:
+            iob_dict[time] = formula
+        else: 
+            iob_dict[time] += formula
+        while remaining_time > 0:
+            step += 0.08333333333333333 #5 min in hours
+            time -= 5 * 60  
+            formula = initial_value - slope * step
+            if time not in iob_dict:
+                iob_dict[time] = formula
+            else: 
+                iob_dict[time] += formula
+            remaining_time -= 5  
+    return iob_dict
+
+def insulin_on_board(basal_data, action_time, timestamp):
+    """ Return insulin on board for a particular timestamp"""
+    iob_dict = calculate_insulin_on_board(basal_data, action_time)
+    if timestamp in iob_dict:
+        return iob_dict[timestamp]
+    else:
+        closest_timestamp = min(iob_dict.keys(), key=lambda k: abs(k-timestamp))
+        return iob_dict[closest_timestamp]

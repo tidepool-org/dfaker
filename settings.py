@@ -12,6 +12,7 @@ def settings(start_time, zonename):
     time_in_seconds = int(start_time.strftime('%s'))
     settings = common_fields.add_common_fields('settings', settings, time_in_seconds, zonename)
     settings["activeSchedule"] = "standard"
+    settings["actionTime"] = random.randint(3,4) #3 or 4 hours for insulin to decay completely
     settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0},
                                                 {"rate": 0.6, "start": 3600000},
                                                 {"rate": 0.65, "start": 10800000},

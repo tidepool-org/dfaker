@@ -88,7 +88,7 @@ def main():
         'zone' : 'US/Pacific', #default zone
         'num_days' : 10, #default number of days to generate data for
         'file' : 'device-data.json', #default json file name 
-        'minify' : False, #compact storage option false by default 
+        'minify' : False, #compact storage coption false by default 
         'gaps' : False, #randomized gaps in data, off by default 
         'smbg_freq' : 6 #default number of fingersticks per day
     }
@@ -125,7 +125,8 @@ def main():
     #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
     #make wizard events
-    wizard_data = wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, no_wizard=pump_suspended, zonename=params['zone'])
+    wizard_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, basal_data=basal_data,
+                         no_wizard=pump_suspended, zonename=params['zone']))
     #make cbg values 
     cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
     #make smbg values 
