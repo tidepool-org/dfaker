@@ -140,19 +140,21 @@ def creare_iob_dict(bolus_data, action_time):
             time += 5 * 60 
             iob_amount = initial_value - slope * step
             if time not in iob_dict:
-                iob_dict[time] = iob_amount
+                iob_dict[time] = round_to(iob_amount)
             else: 
-                iob_dict[time] += iob_amount
+                iob_dict[time] += round_to(iob_amount)
             remaining_time -= 5 #subtract 5 minutes from remaining time 
     return iob_dict
 
 def update_iob_bolus_dict(curr_dict, associated_bolus, action_time):
     """ After a new bolus events is generated during a wizard event, update the iob_dict"""
     to_add = creare_iob_dict(associated_bolus, action_time)
-    updated = curr_dict.copy()
-    updated.update(to_add)
-    return updated
-    
+    for key in to_add:
+        if key in curr_dict:
+            curr_dict[key] += to_add[key]
+        else:
+            curr_dict[key] = to_add[key]
+    return curr_dict    
 
 def insulin_on_board(iob_dict, bolus_data, action_time, timestamp):
     """ Return insulin on board for a particular timestamp"""
@@ -164,4 +166,7 @@ def insulin_on_board(iob_dict, bolus_data, action_time, timestamp):
             return iob_dict[closest_timestamp]
         else:
             return 0
+
+def multiply(x, y):
+    return x * y
 
