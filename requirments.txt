@@ -1,0 +1,11 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: osx-64
+_license=1.1=py34_0
+anaconda=2.2.0=np19py34_0
+matplotlib=1.4.3=np19py34_1
+numpy=1.9.2=py34_0
+pip=7.0.3=py34_0
+python=3.4.3=0
+pytz=2015.2=py34_0
+scipy=0.15.1=np19py34_0
