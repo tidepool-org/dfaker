@@ -156,8 +156,12 @@ def update_iob_bolus_dict(curr_dict, associated_bolus, action_time):
             curr_dict[key] = to_add[key]
     return curr_dict    
 
-def insulin_on_board(iob_dict, bolus_data, action_time, timestamp):
-    """ Return insulin on board for a particular timestamp"""
+def insulin_on_board(iob_dict, timestamp):
+    """ Return insulin on board for a particular timestamp (possible error up to 5 minutes)
+        If a timestamp matches an entry in the iob_dict, return that exact value,
+        else find the closest timestamp and if it is within 5 minutes, use that value
+        else return 0 as the insulin_on_board value 
+    """
     if timestamp in iob_dict:
         return iob_dict[timestamp]
     else:
@@ -166,7 +170,3 @@ def insulin_on_board(iob_dict, bolus_data, action_time, timestamp):
             return iob_dict[closest_timestamp]
         else:
             return 0
-
-def multiply(x, y):
-    return x * y
-
