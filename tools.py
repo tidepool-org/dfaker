@@ -1,13 +1,14 @@
-from pytz import timezone
+import pytz
+#from pytz import timezone
 from datetime import datetime, timedelta 
 
 def is_dst(zonename, date):
-    local_tz = timezone(zonename)
+    local_tz = pytz.timezone(zonename)
     localized_time = local_tz.localize(date)
     return localized_time.dst() != timedelta(0)
 
 def get_offset(zonename, date):
-    local_tz = timezone(zonename) 
+    local_tz = pytz.timezone(zonename) 
     if is_dst(zonename, date):
         return - (24 * 60 - local_tz.utcoffset(date, is_dst=True).seconds / 60)
     else:
@@ -93,7 +94,7 @@ def format_basal_for_wizard(basal_data):
     return time_vals
 
 def format_bolus_for_wizard(bolus_data):
-    """ Retrieve rate times and duration values from bolus data to generate IOB values
+    """ Retrieve rates, times and duration values from bolus data to generate IOB values
         Returns a list of time-bolus lists
     """ 
     time_vals = []
