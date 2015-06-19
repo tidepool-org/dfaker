@@ -1,7 +1,6 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
-anaconda==2.2.0
 matplotlib==1.4.3
 numpy==1.9.2
 pip==7.0.3
