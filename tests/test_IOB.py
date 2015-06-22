@@ -1,5 +1,5 @@
 import unittest
-from ..dfaker import tools
+import tools
 
 class IOB_Tests(unittest.TestCase):
     
