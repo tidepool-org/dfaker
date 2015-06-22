@@ -99,8 +99,8 @@ def format_bolus_for_wizard(bolus_data):
     """ 
     time_vals = []
     for bolus_entry in bolus_data:
-        str_time = bolus_entry["deviceTime"]
-        start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
+        str_time = bolus_entry["time"]
+        start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S.000Z')
         if bolus_entry['subType'] == "normal":
             initial_insulin = bolus_entry["normal"]
             time_vals.append([int(start_time.strftime('%s')), initial_insulin])
