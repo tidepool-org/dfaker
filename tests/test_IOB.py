@@ -105,7 +105,7 @@ class IOB_Tests(unittest.TestCase):
             "uploadId": "upid_abcdefghijklmnop"}]
         self.expected_output = {1425340800: 10.0,  1425341100: 15.0, 1425341400: 15.0, 1425341700: 5.0}
         (self.assertEqual(self.expected_output, 
-            insulin_on_board.update_iob_dict(self.curr_dict, self.associated_bolus, action_time=10/60)))        
+            insulin_on_board.update_iobidk wha_dict(self.curr_dict, self.associated_bolus, action_time=10/60)))        
 
     def test_insulin_on_board(self):
         self.curr_dict =  {1425369600: 10.0,  1425369900: 15.0, 1425370200: 15.0, 1425370500: 5.0}
@@ -121,7 +121,7 @@ class IOB_Tests(unittest.TestCase):
         self.assertEqual(self.expected_exact_output, insulin_on_board.insulin_on_board(self.curr_dict, self.exact_timestamp))
         self.assertEqual(self.expected_approx_output, insulin_on_board.insulin_on_board(self.curr_dict, self.approx_timestamp))
         self.assertEqual(self.expected_far_output, insulin_on_board.insulin_on_board(self.curr_dict, self.far_timestamp))
-        self.assertEqual(self.expected_boundry_output, insulin_on_board.insulin_on_board(self.curr_dict, self.test_boundry_timestamp))
+        self.assertEqual(self.expected_boundry_output, insulin_on_board.insulin_on_board(self.curr_dict, self.boundry_timestamp))
 
 if __name__ == '__main__':
     unittest.main()
