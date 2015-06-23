@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta 
 import tools
 
-
 def format_basal_for_wizard(basal_data):
     """ Retrieve rates, times and duration values from basal data to generate IOB values
         Returns a list of time-basal lists 
@@ -52,8 +51,12 @@ def format_bolus_for_wizard(bolus_data):
                     next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
     return time_vals            
         
-def creare_iob_dict(bolus_data, action_time):
-    """ Return a dictionary with insulin on board values for every timestamp in bolus_data"""
+def create_iob_dict(bolus_data, action_time):
+    """ Return a dictionary with insulin on board values for every timestamp in bolus_data
+        bolus_data -- a list of dict enteries generated when running the bolus module
+        action_time -- an integer representing number of hours it takes insulin to leave the body
+    """
+    
     time_vals = format_bolus_for_wizard(bolus_data)
     iob_dict = {}
     for time_bolus in time_vals:
@@ -68,7 +71,7 @@ def creare_iob_dict(bolus_data, action_time):
         else: 
             iob_dict[time] += iob_amount
         while remaining_time > 5: #continue to calculate iob values until complete decay
-            step += 0.08333333333333333 #5 min in hours
+            step += float(5/60) #5 min in hours
             time += 5 * 60 
             iob_amount = initial_value - slope * step
             if time not in iob_dict:
@@ -80,7 +83,7 @@ def creare_iob_dict(bolus_data, action_time):
 
 def update_iob_dict(curr_dict, associated_bolus, action_time):
     """ After a new bolus events is generated during a wizard event, update the iob_dict"""
-    to_add = creare_iob_dict(associated_bolus, action_time)
+    to_add = create_iob_dict(associated_bolus, action_time)
     for key in to_add:
         if key in curr_dict:
             curr_dict[key] += to_add[key]

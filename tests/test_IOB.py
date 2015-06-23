@@ -68,7 +68,7 @@ class IOB_Tests(unittest.TestCase):
                                 1425341700: 4.5, 1425342000: 4.0, 1425342300: 3.5,
                                 1425342600: 3.0, 1425342900: 2.5, 1425343200: 2.0,
                                 1425343500: 1.5, 1425343800: 1.0, 1425344100: 0.5}
-        self.assertEqual(expected_output, insulin_on_board.creare_iob_dict(expected_input, action_time=1))
+        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=1))
 
     def test_complex_iob_dict_creation(self):
         expected_input = [{"deviceId": "DemoData-123456789",
@@ -90,7 +90,7 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
-        self.assertEqual(expected_output, insulin_on_board.creare_iob_dict(expected_input, action_time=10/60))
+        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=10/60))
 
     def test_iob_update(self):
         self.curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
