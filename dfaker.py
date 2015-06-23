@@ -121,7 +121,7 @@ def main():
     #make settings 
     settings_data = settings(start_time, zonename=params['zone'])
     #make basal values
-    basal_data, pump_suspended = scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
+    basal_data, pump_suspended = scheduled_basal(start_time, num_days=params['num_days'])
     #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
     #make wizard events
