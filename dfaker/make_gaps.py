@@ -1,5 +1,5 @@
-import random
 import numpy as np
+import random
 
 def gaps(data, num_days, gaps):
     """ Create randomized gaps in fake data if user selects the gaps option

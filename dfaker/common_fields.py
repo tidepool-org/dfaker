@@ -1,7 +1,8 @@
-import uuid
-import time
-import tools
 from datetime import datetime
+import time
+import uuid
+
+from . import tools
 
 def add_common_fields(name, datatype, timestamp, zonename):
     """ Populate common fields applicable to all datatypes

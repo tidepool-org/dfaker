@@ -1,8 +1,9 @@
 import random
 import statsmodels.api as sm
-import make_gaps
-import common_fields
-import tools
+
+from . import common_fields
+from . import make_gaps
+from . import tools
 
 def apply_loess(solution, num_days, gaps):
     """Solves the blood glucose equation over specified period of days 

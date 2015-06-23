@@ -1,6 +1,7 @@
 import random
-import common_fields
-import tools
+
+from . import common_fields
+from . import tools
 
 def settings(start_time, zonename):
     """ Construct a settings object

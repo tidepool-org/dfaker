@@ -1,4 +1,4 @@
-#usage: dfaker.py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS] [-f FILE]
+#usage: py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS] [-f FILE]
 #                 [-m] [-g] [-s SMBG_FREQ]
 #
 #optional arguments:
@@ -17,14 +17,14 @@ import pytz
 import json
 import argparse 
 import sys
-import bg_simulator
-from bolus import bolus, generate_boluses
-from wizard import wizard
-from settings import settings
-from cbg import cbg, apply_loess
-from smbg import smbg
-from basal import scheduled_basal
-import tools
+from dfaker import bg_simulator
+from dfaker.bolus import bolus, generate_boluses
+from dfaker.wizard import wizard
+from dfaker.settings import settings
+from dfaker.cbg import cbg, apply_loess
+from dfaker.smbg import smbg
+from dfaker.basal import scheduled_basal
+import dfaker.tools as tools
 
 def parse(args, params):
     if args.date:

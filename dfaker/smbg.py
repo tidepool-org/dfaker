@@ -1,7 +1,8 @@
-import random 
 from datetime import datetime
-import common_fields
-import tools
+import random 
+
+from . import common_fields
+from . import tools
 
 def remove_night_smbg(gluc, timesteps):
     """ Remove most smbg night events """

@@ -1,5 +1,6 @@
 import unittest
-import insulin_on_board
+
+import dfaker.insulin_on_board as insulin_on_board
 
 class IOB_Tests(unittest.TestCase):
     
@@ -90,8 +91,7 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
-        self.assertEqual(expected_output, insulin_on_board.creat
-            e_iob_dict(expected_input, action_time=10/60))
+        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=10/60))
 
     def test_iob_update(self):
         self.curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}

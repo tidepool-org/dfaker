@@ -1,9 +1,10 @@
-import random
-import tools
-import settings
-import numpy as np
 from datetime import datetime
-import common_fields
+import numpy as np
+import random
+
+from . import common_fields
+from . import settings
+from . import tools
 
 def generate_boluses(solution, start_time):
     """ Generates events for both bolus entries and wizard entries.

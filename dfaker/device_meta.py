@@ -1,5 +1,6 @@
-import common_fields
 import random
+
+from . import common_fields
 
 def device_meta(timestamp, zonename):
     meta_entry = {}

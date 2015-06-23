@@ -1,9 +1,10 @@
 import random
-import settings
-import common_fields
-import tools
-import insulin_on_board
-from bolus import square_bolus, normal_bolus, dual_square_bolus, check_bolus_time
+
+from .bolus import square_bolus, normal_bolus, dual_square_bolus, check_bolus_time
+from . import common_fields
+from . import insulin_on_board
+from . import settings
+from . import tools
 
 def wizard(start_time, gluc, carbs, timesteps, basal_data, bolus_data, no_wizard, zonename):
     """ Construct a wizard event
