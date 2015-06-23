@@ -141,8 +141,7 @@ def main():
     else:
         json.dump(dfaker, fp=file_object, sort_keys=True, indent=4) 
     file_object.close()
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
-
-sys.exit(0)
