@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta 
 import tools
 
-def format_basal_for_wizard(basal_data):
+def format_basal_for_iob_calc(basal_data):
     """ Retrieve rates, times and duration values from basal data to generate IOB values
         Returns a list of time-basal lists 
     """
@@ -23,7 +23,7 @@ def format_basal_for_wizard(basal_data):
             next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
     return time_vals
 
-def format_bolus_for_wizard(bolus_data):
+def format_bolus_for_iob_calc(bolus_data):
     """ Retrieve rates, times and duration values from bolus data to generate IOB values
         Returns a list of time-bolus lists
     """ 
@@ -57,7 +57,7 @@ def create_iob_dict(bolus_data, action_time):
         action_time -- an integer representing number of hours it takes insulin to leave the body
     """
     
-    time_vals = format_bolus_for_wizard(bolus_data)
+    time_vals = format_bolus_for_iob_calc(bolus_data)
     iob_dict = {}
     for time_bolus in time_vals:
         remaining_time = action_time * 60 #in minutes

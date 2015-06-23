@@ -23,7 +23,7 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = [[1425340800, 3.5], [1425342000, 5.31]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_wizard(expected_input))
+        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
    
     def test_format_sqaure(self):
         expected_input = [{"deviceId": "DemoData-123456789",
@@ -37,7 +37,7 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = [[1425340800, 1.4],[1425341100, 1.4]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_wizard(expected_input))
+        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
     
     def test_format_dual_square(self):
         expected_input = [{"deviceId": "DemoData-123456789",
@@ -52,7 +52,7 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = [[1425340800, 4.0], [1425340800, 1.5],  [1425341100, 1.5]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_wizard(expected_input))
+        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
 
     def test_simple_iob_dict_creation(self):
         expected_input = [{"deviceId": "DemoData-123456789",
@@ -90,7 +90,8 @@ class IOB_Tests(unittest.TestCase):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         expected_output = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
-        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=10/60))
+        self.assertEqual(expected_output, insulin_on_board.creat
+            e_iob_dict(expected_input, action_time=10/60))
 
     def test_iob_update(self):
         self.curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
