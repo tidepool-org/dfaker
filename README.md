@@ -9,14 +9,10 @@ dfaker is a fake data generator that simulates diabetes data over time.
 dfaker runs with python3. In addition, using the Anaconda scientific Python distribution is recommended as the easiest way of getting all project dependencies. 
 The anaconda installation for python3 can be [found here](http://continuum.io/downloads#py34).
 
-Alternativly, installing the following packages will work as well:
+Alternatively, installing the following packages will work as well:
 * pytz
 * numpy
-* matplotlib
-* scipy
 * statsmodels
-* pandas
-* patsy
 
 #Credits
 

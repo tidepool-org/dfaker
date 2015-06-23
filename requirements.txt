@@ -3,4 +3,4 @@
 # platform: osx-64
 numpy==1.9.2
 pytz==2015.2
-nose==1.3.7
+statsmodels==0.6.1
