@@ -55,7 +55,7 @@ def assign_carbs(sugar, last_carbs, sugar_in_range):
         carbs = random.triangular(-50, 100, 60)
     return carbs
 
-def simulate(num_days=180):
+def simulate(num_days=10):
     days_in_minutes = num_days * 24 * 60
     sugar = random.uniform(80, 180) #start with random sugar level
     last_carbs = random.uniform(-60, 300)

@@ -18,9 +18,7 @@ def wizard(start_time, gluc, carbs, timesteps, basal_data, bolus_data, no_wizard
     """
     wizard_data = []
     access_settings = settings.settings(start_time, zonename)[0]
-
-    iob_dict = insulin_on_board.creare_iob_dict(bolus_data, access_settings["actionTime"])
-
+    iob_dict = insulin_on_board.create_iob_dict(bolus_data, access_settings["actionTime"])
     for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
         if check_bolus_time(timestamp, no_wizard):    
             wizard_reading = {}
