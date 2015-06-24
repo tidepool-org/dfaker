@@ -66,21 +66,22 @@ def create_iob_dict(bolus_data, action_time):
         time = time_bolus[0]
         initial_value = time_bolus[1]
         slope = initial_value / action_time
-        iob_amount = initial_value - slope * step #linear decay equation to calculate IOB at any time 
-        if time not in iob_dict:
-            iob_dict[time] = iob_amount
-        else: 
-            iob_dict[time] += iob_amount
+        iob_dict = add_iob(iob_dict, time, initial_value, slope, step)
         while remaining_time > 5: #continue to calculate iob values until complete decay
             step += float(5/60) #5 min in hours
             time += 5 * 60 
-            iob_amount = initial_value - slope * step
-            if time not in iob_dict:
-                iob_dict[time] = tools.round_to(iob_amount)
-            else: 
-                iob_dict[time] += tools.round_to(iob_amount)
+            iob_dict = add_iob(iob_dict, time, initial_value, slope, step)
             remaining_time -= 5 #subtract 5 minutes from remaining time 
     return iob_dict
+
+def add_iob(curr_dict, time, initial_value, slope, step):
+    """ Add a single iob amount to the iob_dict based on linear decay equation"""
+    iob_amount = initial_value - slope * step #linear decay equation to calculate IOB at any time 
+    if time not in curr_dict:
+        curr_dict[time] = iob_amount
+    else: 
+        curr_dict[time] += iob_amount
+    return curr_dict
 
 def update_iob_dict(curr_dict, associated_bolus, action_time):
     """ After a new bolus events is generated during a wizard event, update the iob_dict"""
