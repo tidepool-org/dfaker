@@ -2,27 +2,34 @@ from datetime import datetime, timedelta
 
 from . import tools
 
-def format_basal_for_iob_calc(basal_data):
-    """ Retrieve rates, times and duration values from basal data to generate IOB values
-        Returns a list of time-basal lists 
-    """
-    time_vals = []
-    for basal_entry in basal_data:
-        if basal_entry['type'] == 'basal' and basal_entry['deliveryType'] != 'suspend':
-            rate = basal_entry["rate"] #unit per hour
-            duration = basal_entry["duration"]/1000/60 #in minutes
-            str_time = basal_entry["deviceTime"]
-            start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
-            total_insulin_delivered = rate * (duration/60) 
-            num_segments = duration / 5 #5 minute segments 
-            insulin_per_segment = total_insulin_delivered / num_segments
-        next_time = int(start_time.strftime('%s')) #in seconds
-        end_date = start_time + timedelta(minutes=duration)
-        end_time = int(end_date.strftime('%s'))
-        while next_time < end_time:
-            time_vals.append([next_time, insulin_per_segment])
-            next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
-    return time_vals
+#def format_basal_for_iob_calc(basal_data):
+ #   """ Retrieve rates, times and duration values from basal data to generate IOB values
+  #      Returns a list of time-basal lists 
+   # """
+    #time_vals = []
+#    for basal_entry in basal_data:
+ #       if basal_entry['type'] == 'basal' and basal_entry['deliveryType'] != 'suspend':
+  #          rate = basal_entry["rate"] #unit per hour
+   #         duration = basal_entry["duration"]/1000/60 #in minutes
+    #        str_time = basal_entry["deviceTime"]
+     #       start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
+      #      total_insulin_delivered = rate * (duration/60) 
+       #     num_segments = duration / 5 #5 minute segments 
+        #    insulin_per_segment = total_insulin_delivered / num_segments
+#        next_time = int(start_time.strftime('%s')) #in seconds
+ #       end_date = start_time + timedelta(minutes=duration)
+  #      end_time = int(end_date.strftime('%s'))
+   #     while next_time < end_time:
+    #        time_vals.append([next_time, insulin_per_segment])
+     #       next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
+    #return time_vals
+
+
+def convert_ISO_to_epoch(datetime_string):
+    datetime_object = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S.000Z')
+    epoch = datetime.utcfromtimestamp(0)
+    delta = datetime_object - epoch
+    return int(delta.total_seconds())
 
 def format_bolus_for_iob_calc(bolus_data):
     """ Retrieve rates, times and duration values from bolus data to generate IOB values
@@ -31,10 +38,11 @@ def format_bolus_for_iob_calc(bolus_data):
     time_vals = []
     for bolus_entry in bolus_data:
         str_time = bolus_entry["time"]
-        start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S.000Z')
+        timestamp = convert_ISO_to_epoch(str_time)
+        #start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S.000Z')
         if bolus_entry['subType'] == "normal":
             initial_insulin = bolus_entry["normal"]
-            time_vals.append([int(start_time.strftime('%s')), initial_insulin])
+            time_vals.append([timestamp, initial_insulin])
         else:
             duration = bolus_entry["duration"]/1000/60 #in minutes
             if duration > 0:
@@ -43,10 +51,11 @@ def format_bolus_for_iob_calc(bolus_data):
                 insulin_per_segment = extended_insulin / num_segments
                 if bolus_entry['subType'] == "dual/square":
                     initial_insulin = bolus_entry["normal"]
-                    time_vals.append([int(start_time.strftime('%s')), initial_insulin])
-                next_time = int(start_time.strftime('%s')) #in seconds
-                end_date = start_time + timedelta(minutes=duration)
-                end_time = int(end_date.strftime('%s'))
+                    time_vals.append([timestamp, initial_insulin])
+                next_time = timestamp 
+                end_time = next_time + duration*60 #duration in seconds
+               # end_date = start_time + timedelta(minutes=duration)
+               # end_time = convert_ISO_to_epoch(end_date)
                 while next_time < end_time:
                     time_vals.append([next_time, insulin_per_segment])
                     next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
@@ -57,7 +66,6 @@ def create_iob_dict(bolus_data, action_time):
         bolus_data -- a list of dict enteries generated when running the bolus module
         action_time -- an integer representing number of hours it takes insulin to leave the body
     """
-    
     time_vals = format_bolus_for_iob_calc(bolus_data)
     iob_dict = {}
     for time_bolus in time_vals:

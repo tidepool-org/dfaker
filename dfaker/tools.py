@@ -40,6 +40,15 @@ def make_timesteps(start_timestamp, timelist):
         timesteps.append(new_time)
     return timesteps
 
+def convert_ISO_to_epoch(datetime_string):
+    """ Takes a datetime string and returns an epoch time in seconds
+        Only works when datetime_string is in UTC 
+    """
+    datetime_object = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S.000Z')
+    epoch = datetime.utcfromtimestamp(0)
+    delta = datetime_object - epoch
+    return int(delta.total_seconds())
+
 def get_rate_from_settings(schedule, time, name):
     """Obtains a rate or amount from settings based on time of day
        If name is basalSchedules, returns rate as well as start and stop times

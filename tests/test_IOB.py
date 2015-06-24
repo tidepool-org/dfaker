@@ -1,61 +1,14 @@
 import unittest
 
 import dfaker.insulin_on_board as insulin_on_board
+import dfaker.tools as tools
+#from .test_utilities import convert_ISO_to_epoch
+
 
 class IOB_Tests(unittest.TestCase):
     
-    def test_format_normal(self):
-        expected_input = [ {"deviceId": "DemoData-123456789",
-            "deviceTime": "2015-03-03T08:00:00",
-            "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
-            "normal": 3.5,
-            "subType": "normal",
-            "time": "2015-03-03T00:00:00.000Z",
-            "timezoneOffset": -480.0,
-            "type": "bolus",
-            "uploadId": "upid_abcdefghijklmnop"},
-            { "deviceId": "DemoData-123456789",
-            "deviceTime": "2015-03-03T00:20:00",
-            "id": "de34ecc6-841a-4e72-9f59-c3bcfb708feb",
-            "normal": 5.31,
-            "subType": "normal",
-            "time": "2015-03-03T00:20:00.000Z",
-            "timezoneOffset": -480.0,
-            "type": "bolus",
-            "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = [[1425340800, 3.5], [1425342000, 5.31]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
-   
-    def test_format_sqaure(self):
-        expected_input = [{"deviceId": "DemoData-123456789",
-            "deviceTime": "2015-03-03T00:00:00",
-            "duration": 600000,
-            "extended": 2.8,
-            "id": "cdad40ee-9ec4-44bb-a466-afd1bf53e362",
-            "subType": "square",
-            "time": "2015-03-03T00:00:00.000Z",
-            "timezoneOffset": -480.0,
-            "type": "bolus",
-            "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = [[1425340800, 1.4],[1425341100, 1.4]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
-    
-    def test_format_dual_square(self):
-        expected_input = [{"deviceId": "DemoData-123456789",
-            "deviceTime": "2015-03-03T00:00:00",
-            "duration": 600000,
-            "extended": 3.0,
-            "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
-            "normal": 4.0,
-            "subType": "dual/square",
-            "time": "2015-03-03T00:00:00.000Z",
-            "timezoneOffset": -480.0,
-            "type": "bolus",
-            "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = [[1425340800, 4.0], [1425340800, 1.5],  [1425341100, 1.5]]
-        self.assertEqual(expected_output, insulin_on_board.format_bolus_for_iob_calc(expected_input))
-
     def test_simple_iob_dict_creation(self):
+        #action time is one hour, and a single normal insulin dose is given
         expected_input = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:00:00",
             "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
@@ -65,13 +18,16 @@ class IOB_Tests(unittest.TestCase):
             "timezoneOffset": -480.0,
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = {1425340800: 6.0, 1425341100: 5.5, 1425341400: 5.0, 
-                                1425341700: 4.5, 1425342000: 4.0, 1425342300: 3.5,
-                                1425342600: 3.0, 1425342900: 2.5, 1425343200: 2.0,
-                                1425343500: 1.5, 1425343800: 1.0, 1425344100: 0.5}
-        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=1))
+        res_dict = insulin_on_board.create_iob_dict(expected_input, action_time=1)
+        half_way = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:30:00.000Z')] #30 mins later
+        three_fourth = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:45:00.000Z')] #45 mins later
+        #test that halfway through the action time, IOB is half the original bolus
+        self.assertEqual(tools.round_to(half_way), float(expected_input[0]['normal'] / 2)) 
+        #test that 75% through the action time, IOB is one fourth the original bolus
+        self.assertEqual(tools.round_to(three_fourth), float(expected_input[0]['normal'] / 4))
 
     def test_complex_iob_dict_creation(self):
+        #Action time is 10 minutes, and two normal insulin doeses are given 5 minutes apart
         expected_input = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:00:00",
             "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
@@ -90,12 +46,22 @@ class IOB_Tests(unittest.TestCase):
             "timezoneOffset": -480.0,
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
-        self.assertEqual(expected_output, insulin_on_board.create_iob_dict(expected_input, action_time=10/60))
+        res_dict = insulin_on_board.create_iob_dict(expected_input, action_time=10/60)
+        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')]
+        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')]
+        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')]
+
+        #At time = 0 min, IOB should be 10  
+        self.assertEqual(initial_iob, 10.0)
+        #At time = 5 min, initial IOB = 5 + second IOB = 10 --> 15 total 
+        self.assertEqual(five_min, 15.0)    
+        #At time = 10 min, initial IOB = 0, and second IOB should have 5 units left 
+        self.assertEqual(ten_min, 5.0) 
 
     def test_iob_update(self):
-        self.curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5}
-        self.associated_bolus = [{"deviceId": "DemoData-123456789",
+        #Action time is 10 minutes and a new bolus is added to curr_dict at time = 10 mins
+        curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5} #IOB values 5 minutes apart for 10 minutes
+        associated_bolus = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:10:00",
             "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
             "normal": 10,
@@ -104,25 +70,52 @@ class IOB_Tests(unittest.TestCase):
             "timezoneOffset": -480.0,
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
-        expected_output = {1425340800: 10.0,  1425341100: 15.0, 1425341400: 15.0, 1425341700: 5.0}
-        (self.assertEqual(expected_output, 
-            insulin_on_board.update_iob_dict(self.curr_dict, self.associated_bolus, action_time=10/60)))        
+
+        res_dict = insulin_on_board.update_iob_dict(curr_dict, associated_bolus, action_time=10/60)
+        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')]
+        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')]
+        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')]
+        fifteen_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z')]
+
+        #At time = 0 min, IOB should be 10, (same as original dict) 
+        self.assertEqual(initial_iob, 10.0)
+        #At time = 5 min, IOB should be 15, (same as original dict) 
+        self.assertEqual(five_min, 15.0)    
+        #At time = 10 min, the original dict value of 5 should add to the new bolus of 10 --> 15 total
+        self.assertEqual(ten_min, 15.0)
+        #At time = 15 min, the original dict should update to account for the 5 remaining units of the new entry 
+        self.assertEqual(ten_min, 15.0)
+
 
     def test_insulin_on_board(self):
-        curr_dict =  {1425369600: 10.0,  1425369900: 15.0, 1425370200: 15.0, 1425370500: 5.0}
-        exact_timestamp =  1425369900
-        expected_exact_output = 15.0
-        approx_timestamp = 1425370600
-        expected_approx_output = 5.0
-        far_timestamp = 1425370801
-        expected_far_output = 0
-        boundry_timestamp = 1425369300
-        expected_boundry_output = 10.0
+        """ Check that assigning iob values works as intended """
+        start_time = tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')
+        five_min = tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')
+        ten_min = tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')
+        fifteen_min = tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z')
+        curr_dict =  {start_time: 10.0,  five_min: 15.0, ten_min: 15.0, fifteen_min: 5.0} 
 
-        self.assertEqual(expected_exact_output, insulin_on_board.insulin_on_board(curr_dict, exact_timestamp))
-        self.assertEqual(expected_approx_output, insulin_on_board.insulin_on_board(curr_dict, approx_timestamp))
-        self.assertEqual(expected_far_output, insulin_on_board.insulin_on_board(curr_dict, far_timestamp))
-        self.assertEqual(expected_boundry_output, insulin_on_board.insulin_on_board(curr_dict, boundry_timestamp))
+        #test an iob value for a time that exists in the dict
+        exact_time = start_time 
+        expected_exact_output = 10.0
+        self.assertEqual(expected_exact_output, insulin_on_board.insulin_on_board(curr_dict, exact_time))
+
+        #test iob values within 5 minutes of a time value that exists in the dict
+        approx_time_round_down = tools.convert_ISO_to_epoch('2015-03-03T00:19:00.000Z') #4 mins away from fifteen_min
+        approx_time_round_up = tools.convert_ISO_to_epoch('2015-03-03T00:14:00.000Z') #1 min away from fifteen_min
+        expected_approx_output = 5.0
+        self.assertEqual(expected_approx_output, insulin_on_board.insulin_on_board(curr_dict, approx_time_round_down))       
+        self.assertEqual(expected_approx_output, insulin_on_board.insulin_on_board(curr_dict, approx_time_round_up))
+
+        #test an iob value that is out of the 5 minute approximation range 
+        far_time = tools.convert_ISO_to_epoch('2015-03-03T00:22:00.000Z') 
+        expected_far_output = 0
+        self.assertEqual(expected_far_output, insulin_on_board.insulin_on_board(curr_dict, far_time))
+        
+        #test the boundy case of exactly 5 minutes away 
+        boundry_time = tools.convert_ISO_to_epoch('2015-03-03T00:20:00.000Z') #exactly 5 minutes away from fifteen_min 
+        expected_boundry_output = 5.0
+        self.assertEqual(expected_boundry_output, insulin_on_board.insulin_on_board(curr_dict, boundry_time))
 
 if __name__ == '__main__':
     unittest.main()
