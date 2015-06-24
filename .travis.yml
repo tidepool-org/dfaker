@@ -1,13 +1,13 @@
 language: python
 python:
-  - "3.4_with_system_site_packages"
+  - "3.4"
 
 before_install:
  - sudo apt-get update
  - sudo apt-get install python-opencv
 
 install: 
- - "pip install -r requirements.txt"
+ - "pip install -r requirements.txt --use-mirrors"
 
 # command to run tests
 script: nosetests 
