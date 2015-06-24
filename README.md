@@ -13,6 +13,12 @@ Alternatively, installing the following packages will work as well:
 * pytz
 * numpy
 * statsmodels
+* nose
+* pandas
+* patsy
+* python-dateutil
+* scipy
+* six
 
 #Credits
 
