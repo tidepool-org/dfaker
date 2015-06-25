@@ -19,8 +19,8 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy pandas nose scipy six patsy python-dateutil statsmodels pytz
   - pip install chai
-
+  - pip install rednose
 
 # Run test
 script:
-  - "nosetests"
+  - "nosetests -v --rednose"

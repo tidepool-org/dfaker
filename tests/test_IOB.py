@@ -1,4 +1,5 @@
 from chai import Chai
+import unittest
 
 import dfaker.insulin_on_board as insulin_on_board
 import dfaker.tools as tools
@@ -114,6 +115,15 @@ class Test_IOB(Chai):
         expected_boundry_output = 5.0
         self.assertEqual(expected_boundry_output, insulin_on_board.insulin_on_board(curr_dict, boundry_time))
 
-if __name__ == '__main__':
-    import unittest2
-    unittest2.main()
+def suite():
+    """ Gather all the tests from this module in a test suite """
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(Test_IOB))
+    return test_suite
+
+mySuit = suite()
+
+runner = unittest.TextTestRunner()
+runner.run(mySuit)
+
+
