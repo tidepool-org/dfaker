@@ -1,14 +1,12 @@
-import unittest
+from chai import Chai
 
 import dfaker.insulin_on_board as insulin_on_board
 import dfaker.tools as tools
-#from .test_utilities import convert_ISO_to_epoch
 
+class Test_IOB(Chai):
 
-class IOB_Tests(unittest.TestCase):
-    
     def test_simple_iob_dict_creation(self):
-        #action time is one hour, and a single normal insulin dose is given
+        """ Check a single insulin dose distribution over action_time = one hour"""
         expected_input = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:00:00",
             "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
@@ -27,7 +25,7 @@ class IOB_Tests(unittest.TestCase):
         self.assertEqual(tools.round_to(three_fourth), float(expected_input[0]['normal'] / 4))
 
     def test_complex_iob_dict_creation(self):
-        #Action time is 10 minutes, and two normal insulin doeses are given 5 minutes apart
+        """ Check two insulin doses five minutes apart, action_time = 10 minutes"""
         expected_input = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:00:00",
             "id": "002650eb-3d53-4a3d-b39f-6cd0c1ce58f2",
@@ -59,7 +57,7 @@ class IOB_Tests(unittest.TestCase):
         self.assertEqual(ten_min, 5.0) 
 
     def test_iob_update(self):
-        #Action time is 10 minutes and a new bolus is added to curr_dict at time = 10 mins
+        """ Test updating an existing dictionary with a new bolus entry"""
         curr_dict = {1425340800: 10.0,  1425341100: 15, 1425341400: 5} #IOB values 5 minutes apart for 10 minutes
         associated_bolus = [{"deviceId": "DemoData-123456789",
             "deviceTime": "2015-03-03T00:10:00",
@@ -86,9 +84,8 @@ class IOB_Tests(unittest.TestCase):
         #At time = 15 min, the original dict should update to account for the 5 remaining units of the new entry 
         self.assertEqual(ten_min, 15.0)
 
-
     def test_insulin_on_board(self):
-        """ Check that assigning iob values works as intended """
+        """ Check that assigning iob values to specific times works as intended """
         start_time = tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')
         five_min = tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')
         ten_min = tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')
@@ -118,4 +115,5 @@ class IOB_Tests(unittest.TestCase):
         self.assertEqual(expected_boundry_output, insulin_on_board.insulin_on_board(curr_dict, boundry_time))
 
 if __name__ == '__main__':
-    unittest.main()
+    import unittest2
+    unittest2.main()
