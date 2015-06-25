@@ -9,9 +9,9 @@ def is_dst(zonename, date):
 def get_offset(zonename, date):
     local_tz = pytz.timezone(zonename) 
     if is_dst(zonename, date):
-        return - (24 * 60 - local_tz.utcoffset(date, is_dst=True).seconds / 60)
+        return local_tz.utcoffset(date, is_dst=True).total_seconds() / 60
     else:
-        return - (24 * 60 - local_tz.utcoffset(date, is_dst=False).seconds / 60) 
+        return local_tz.utcoffset(date, is_dst=False).total_seconds() / 60
 
 def convert_to_mmol(iterable):
     conversion_factor = 18.01559
