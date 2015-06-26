@@ -19,8 +19,7 @@ def scheduled_basal(start_time, num_days, zonename):
     utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
     next_time = int(utc_time - offset*60)
     seconds_to_add = num_days * 24 * 60 * 60
-    end_date = start_time + timedelta(seconds=seconds_to_add)
-    end_time = int(end_date.strftime('%s'))
+    end_time = next_time + seconds_to_add
     while next_time < end_time:
         basal_entry = {}
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, zonename)
