@@ -18,8 +18,8 @@ class Test_IOB(Chai):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         res_dict = insulin_on_board.create_iob_dict(expected_input, action_time=1)
-        half_way = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:30:00.000Z')] #30 mins later
-        three_fourth = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:45:00.000Z')] #45 mins later
+        half_way = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:30:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')] #30 mins later
+        three_fourth = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:45:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')] #45 mins later
         #test that halfway through the action time, IOB is half the original bolus
         self.assertEqual(tools.round_to(half_way), float(expected_input[0]['normal'] / 2)) 
         #test that 75% through the action time, IOB is one fourth the original bolus
@@ -46,9 +46,9 @@ class Test_IOB(Chai):
             "type": "bolus",
             "uploadId": "upid_abcdefghijklmnop"}]
         res_dict = insulin_on_board.create_iob_dict(expected_input, action_time=10/60)
-        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')]
-        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')]
-        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')]
+        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
+        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
+        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
 
         #At time = 0 min, IOB should be 10  
         self.assertEqual(initial_iob, 10.0)
@@ -71,10 +71,10 @@ class Test_IOB(Chai):
             "uploadId": "upid_abcdefghijklmnop"}]
 
         res_dict = insulin_on_board.update_iob_dict(curr_dict, associated_bolus, action_time=10/60)
-        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')]
-        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')]
-        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')]
-        fifteen_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z')]
+        initial_iob = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
+        five_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
+        ten_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
+        fifteen_min = res_dict[tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')]
 
         #At time = 0 min, IOB should be 10, (same as original dict) 
         self.assertEqual(initial_iob, 10.0)
@@ -87,10 +87,10 @@ class Test_IOB(Chai):
 
     def test_insulin_on_board(self):
         """ Check that assigning iob values to specific times works as intended """
-        start_time = tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z')
-        five_min = tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z')
-        ten_min = tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z')
-        fifteen_min = tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z')
+        start_time = tools.convert_ISO_to_epoch('2015-03-03T00:00:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')
+        five_min = tools.convert_ISO_to_epoch('2015-03-03T00:05:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')
+        ten_min = tools.convert_ISO_to_epoch('2015-03-03T00:10:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')
+        fifteen_min = tools.convert_ISO_to_epoch('2015-03-03T00:15:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z')
         curr_dict =  {start_time: 10.0,  five_min: 15.0, ten_min: 15.0, fifteen_min: 5.0} 
 
         #test an iob value for a time that exists in the dict
@@ -99,19 +99,19 @@ class Test_IOB(Chai):
         self.assertEqual(expected_exact_output, insulin_on_board.insulin_on_board(curr_dict, exact_time))
 
         #test iob values within 5 minutes of a time value that exists in the dict
-        approx_time_round_down = tools.convert_ISO_to_epoch('2015-03-03T00:19:00.000Z') #4 mins away from fifteen_min
-        approx_time_round_up = tools.convert_ISO_to_epoch('2015-03-03T00:14:00.000Z') #1 min away from fifteen_min
+        approx_time_round_down = tools.convert_ISO_to_epoch('2015-03-03T00:19:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z') #4 mins away from fifteen_min
+        approx_time_round_up = tools.convert_ISO_to_epoch('2015-03-03T00:14:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z') #1 min away from fifteen_min
         expected_approx_output = 5.0
         self.assertEqual(expected_approx_output, insulin_on_board.insulin_on_board(curr_dict, approx_time_round_down))       
         self.assertEqual(expected_approx_output, insulin_on_board.insulin_on_board(curr_dict, approx_time_round_up))
 
         #test an iob value that is out of the 5 minute approximation range 
-        far_time = tools.convert_ISO_to_epoch('2015-03-03T00:22:00.000Z') 
+        far_time = tools.convert_ISO_to_epoch('2015-03-03T00:22:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z') 
         expected_far_output = 0
         self.assertEqual(expected_far_output, insulin_on_board.insulin_on_board(curr_dict, far_time))
         
         #test the boundy case of exactly 5 minutes away 
-        boundry_time = tools.convert_ISO_to_epoch('2015-03-03T00:20:00.000Z') #exactly 5 minutes away from fifteen_min 
+        boundry_time = tools.convert_ISO_to_epoch('2015-03-03T00:20:00.000Z', '%Y-%m-%dT%H:%M:%S.000Z') #exactly 5 minutes away from fifteen_min 
         expected_boundry_output = 5.0
         self.assertEqual(expected_boundry_output, insulin_on_board.insulin_on_board(curr_dict, boundry_time))
 

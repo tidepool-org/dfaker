@@ -49,6 +49,7 @@ class Test_Tools(Chai):
 
     def test_float_rounding(self):
         """ Test rounding foalts to specified percision """
+        #Note, the round_to function always trunctuates the result to three decimal points
         positive_float = 6.124849333
         negative_float = -7.89209123
         low_precision = 0.5
@@ -72,18 +73,17 @@ class Test_Tools(Chai):
     def test_timestep_creation(self):
         """ Based on a start time and a list of incrementing numbers, test generation of epoch timesteps"""
         #start time must have a timezone attached, 01/01/2015 00:00
-        start_time = datetime(2015, 1, 1, 0, 0, 0, tzinfo=pytz.timezone('US/Pacific'))
+        start_time = datetime(2015, 1, 1, 0, 0, 0)
+        offset = -480
         time_list_every_5min = [0, 5, 10]
         expected_5min_output = [1420099200, 1420099500, 1420099800] #generated using http://www.epochconverter.com/
 
         time_list_every_hour = [0, 60, 120]
         expected_hourly_output = [1420099200, 1420102800, 1420106400] #generated using http://www.epochconverter.com/
 
-        self.assertEqual(expected_5min_output, tools.make_timesteps(start_time, time_list_every_5min))
-        self.assertEqual(expected_hourly_output, tools.make_timesteps(start_time, time_list_every_hour))
+        self.assertEqual(expected_5min_output, tools.make_timesteps(start_time, offset, time_list_every_5min))
+        self.assertEqual(expected_hourly_output, tools.make_timesteps(start_time, offset, time_list_every_hour))
 
-
-   
 
 def suite():
     """ Gather all the tests from this module in a test suite """
