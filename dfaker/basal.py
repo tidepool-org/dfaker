@@ -15,7 +15,9 @@ def scheduled_basal(start_time, num_days, zonename):
     """
     basal_data, pump_suspended = [], []  
     access_settings = settings.settings(start_time, zonename=zonename)[0]
-    next_time = int(start_time.strftime('%s')) #in seconds
+    offset = tools.get_offset(zonename, start_time)
+    utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
+    next_time = int(utc_time - offset*60)
     seconds_to_add = num_days * 24 * 60 * 60
     end_date = start_time + timedelta(seconds=seconds_to_add)
     end_time = int(end_date.strftime('%s'))
@@ -35,7 +37,7 @@ def scheduled_basal(start_time, num_days, zonename):
             diff = end_offset - start_offset
             localized_end = localized_end - timedelta(minutes=diff)
         elapsed_seconds = (localized_end - localized_start).total_seconds()
-        if next_time == int(start_time.strftime('%s')) or start != corrected_start:
+        if next_time == int(utc_time - offset*60) or start != corrected_start:
             basal_entry["duration"] = end - corrected_start 
         else:
             basal_entry["duration"] = int(elapsed_seconds * 1000)
