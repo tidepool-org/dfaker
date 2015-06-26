@@ -72,8 +72,7 @@ class Test_Tools(Chai):
 
     def test_timestep_creation(self):
         """ Based on a start time and a list of incrementing numbers, test generation of epoch timesteps"""
-        #start time must have a timezone attached, 01/01/2015 00:00
-        start_time = datetime(2015, 1, 1, 0, 0, 0)
+        start_time = datetime(2015, 1, 1, 0, 0, 0) # 01/01/2015 00:00
         offset = -480
         time_list_every_5min = [0, 5, 10]
         expected_5min_output = [1420099200, 1420099500, 1420099800] #generated using http://www.epochconverter.com/
@@ -83,7 +82,6 @@ class Test_Tools(Chai):
 
         self.assertEqual(expected_5min_output, tools.make_timesteps(start_time, offset, time_list_every_5min))
         self.assertEqual(expected_hourly_output, tools.make_timesteps(start_time, offset, time_list_every_hour))
-
 
 def suite():
     """ Gather all the tests from this module in a test suite """

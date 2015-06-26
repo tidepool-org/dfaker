@@ -50,7 +50,6 @@ def convert_ISO_to_epoch(datetime_string, date_format):
         Only works when datetime_string is in UTC 
     """
     datetime_object = datetime.strptime(datetime_string, date_format)
-    #datetime_object = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S.000Z')
     epoch = datetime.utcfromtimestamp(0)
     delta = datetime_object - epoch
     return int(delta.total_seconds())
