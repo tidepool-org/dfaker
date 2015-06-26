@@ -6,14 +6,14 @@ from . import common_fields
 from . import settings
 from . import tools
 
-def generate_boluses(solution, start_time):
+def generate_boluses(solution, start_time, zone_offset):
     """ Generates events for both bolus entries and wizard entries.
         Returns carb, time and glucose values for each event
     """
     all_carbs = solution[:, 0]
     glucose = solution[:,1]
     time = solution[:, 2]
-    ts = tools.make_timesteps(start_time, solution[:,2])
+    ts = tools.make_timesteps(start_time, zone_offset, solution[:,2])
     positives = []
     for row in zip(all_carbs, ts, glucose): #keep significant carb events
         if row[0] > 10:

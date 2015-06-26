@@ -109,19 +109,19 @@ def main():
     solution = bg_simulator.simulate(params['num_days'])
 
     d = params['datetime']
-    start_time = datetime(d.year, d.month, d.day, 
-                        d.hour, d.minute, tzinfo=pytz.timezone(params['zone']))
+    start_time = datetime(d.year, d.month, d.day, d.hour, d.minute)
+    zone_offset = tools.get_offset(params['zone'], start_time)
 
     cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(solution, num_days=params['num_days'], gaps=params['gaps'])
-    cbg_timesteps = tools.make_timesteps(start_time, cbg_time)
-    smbg_timesteps = tools.make_timesteps(start_time, smbg_time)
+    cbg_timesteps = tools.make_timesteps(start_time, zone_offset, cbg_time)
+    smbg_timesteps = tools.make_timesteps(start_time, zone_offset, smbg_time)
 
-    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time)
+    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time, zone_offset)
 
     #make settings 
     settings_data = settings(start_time, zonename=params['zone'])
     #make basal values
-    basal_data, pump_suspended = scheduled_basal(start_time, num_days=params['num_days'])
+    basal_data, pump_suspended = scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
     #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
     #make wizard events

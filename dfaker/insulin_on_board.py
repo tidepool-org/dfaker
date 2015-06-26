@@ -25,12 +25,6 @@ from . import tools
     #return time_vals
 
 
-def convert_ISO_to_epoch(datetime_string):
-    datetime_object = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S.000Z')
-    epoch = datetime.utcfromtimestamp(0)
-    delta = datetime_object - epoch
-    return int(delta.total_seconds())
-
 def format_bolus_for_iob_calc(bolus_data):
     """ Retrieve rates, times and duration values from bolus data to generate IOB values
         Returns a list of time-bolus lists
@@ -38,8 +32,7 @@ def format_bolus_for_iob_calc(bolus_data):
     time_vals = []
     for bolus_entry in bolus_data:
         str_time = bolus_entry["time"]
-        timestamp = convert_ISO_to_epoch(str_time)
-        #start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S.000Z')
+        timestamp = tools.convert_ISO_to_epoch(str_time, '%Y-%m-%dT%H:%M:%S.000Z')
         if bolus_entry['subType'] == "normal":
             initial_insulin = bolus_entry["normal"]
             time_vals.append([timestamp, initial_insulin])
@@ -54,8 +47,6 @@ def format_bolus_for_iob_calc(bolus_data):
                     time_vals.append([timestamp, initial_insulin])
                 next_time = timestamp 
                 end_time = next_time + duration*60 #duration in seconds
-               # end_date = start_time + timedelta(minutes=duration)
-               # end_time = convert_ISO_to_epoch(end_date)
                 while next_time < end_time:
                     time_vals.append([next_time, insulin_per_segment])
                     next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
