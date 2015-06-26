@@ -2,29 +2,6 @@ from datetime import datetime, timedelta
 
 from . import tools
 
-#def format_basal_for_iob_calc(basal_data):
- #   """ Retrieve rates, times and duration values from basal data to generate IOB values
-  #      Returns a list of time-basal lists 
-   # """
-    #time_vals = []
-#    for basal_entry in basal_data:
- #       if basal_entry['type'] == 'basal' and basal_entry['deliveryType'] != 'suspend':
-  #          rate = basal_entry["rate"] #unit per hour
-   #         duration = basal_entry["duration"]/1000/60 #in minutes
-    #        str_time = basal_entry["deviceTime"]
-     #       start_time = datetime.strptime(str_time, '%Y-%m-%dT%H:%M:%S')
-      #      total_insulin_delivered = rate * (duration/60) 
-       #     num_segments = duration / 5 #5 minute segments 
-        #    insulin_per_segment = total_insulin_delivered / num_segments
-#        next_time = int(start_time.strftime('%s')) #in seconds
- #       end_date = start_time + timedelta(minutes=duration)
-  #      end_time = int(end_date.strftime('%s'))
-   #     while next_time < end_time:
-    #        time_vals.append([next_time, insulin_per_segment])
-     #       next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
-    #return time_vals
-
-
 def format_bolus_for_iob_calc(bolus_data):
     """ Retrieve rates, times and duration values from bolus data to generate IOB values
         Returns a list of time-bolus lists
