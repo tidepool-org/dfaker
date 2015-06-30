@@ -116,7 +116,8 @@ def main():
     cbg_timesteps = tools.make_timesteps(start_time, zone_offset, cbg_time)
     smbg_timesteps = tools.make_timesteps(start_time, zone_offset, smbg_time)
 
-    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = generate_boluses(solution, start_time, zone_offset)
+    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = (
+            generate_boluses(solution, start_time, zonename=params['zone'], zone_offset=zone_offset))
 
     #make settings 
     settings_data = settings(start_time, zonename=params['zone'])

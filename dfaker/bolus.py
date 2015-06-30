@@ -1,12 +1,13 @@
 from datetime import datetime
 import numpy as np
 import random
+import pytz
 
 from . import common_fields
 from . import settings
 from . import tools
 
-def generate_boluses(solution, start_time, zone_offset):
+def generate_boluses(solution, start_time, zonename, zone_offset):
     """ Generates events for both bolus entries and wizard entries.
         Returns carb, time and glucose values for each event
     """
@@ -19,7 +20,7 @@ def generate_boluses(solution, start_time, zone_offset):
         if row[0] > 10:
             positives.append(row)
     np_pos = np.array(clean_up_boluses(positives))
-    cleaned = remove_night_boluses(np_pos)
+    cleaned = remove_night_boluses(np_pos, zonename)
 
     for row in cleaned: #find carb values that are too high and reduce them
         carb_val = row[0]
@@ -42,16 +43,18 @@ def clean_up_boluses(carb_time_gluc, filter_rate=7):
     """
     return carb_time_gluc[::filter_rate]
 
-def remove_night_boluses(carb_time_gluc):
+def remove_night_boluses(carb_time_gluc, zonename):
     """Removes night boluses excpet for events with high glucose""" 
     keep = []
     for row in carb_time_gluc:
+        carb_val = row[0]
         time_val = row[1]
         gluc_val = row[2]
-        hour = datetime.fromtimestamp(time_val).hour
+        hour = datetime.fromtimestamp(time_val, pytz.timezone(zonename)).hour
         if hour > 6 and hour < 23:
             keep.append(row)
-        elif int(gluc_val) not in range(0,250):
+        keep if glucose level is high and a high enough insuling dose is given
+        elif int(gluc_val) not in range(0,250) and carb_val > 25:
             keep.append(row)
     np_keep = np.array(keep)
     return np_keep
