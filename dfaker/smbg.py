@@ -1,14 +1,15 @@
 from datetime import datetime
 import random 
+import pytz
 
 from . import common_fields
 from . import tools
 
-def remove_night_smbg(gluc, timesteps):
+def remove_night_smbg(gluc, timesteps, zonename):
     """ Remove most smbg night events """
     keep = []
     for row in zip(gluc, timesteps):
-        hour = datetime.fromtimestamp(row[1]).hour
+        hour = datetime.fromtimestamp(row[1], pytz.timezone(zonename)).hour
         night_smbg = random.randint(0, 4) #keep some random night smbg events 
         if hour > 6 and hour < 24:
             keep.append(row)
@@ -39,7 +40,7 @@ def smbg(gluc, timesteps, stick_freq, zonename):
         zonename -- name of timezone in effect 
     """
     smbg_data = []
-    remove_night = remove_night_smbg(gluc, timesteps)   
+    remove_night = remove_night_smbg(gluc, timesteps, zonename)   
     time_gluc = randomize_smbg(remove_night, stick_freq)
     for value, timestamp in time_gluc:
         randomize_time = random.randrange(-5000, 5000)
