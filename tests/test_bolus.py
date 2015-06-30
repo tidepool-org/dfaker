@@ -1,7 +1,6 @@
 from chai import Chai
 import unittest
 from datetime import datetime
-import pytz
 import numpy as np
 
 import dfaker.tools as tools
@@ -17,7 +16,7 @@ class Test_Bolus(Chai):
         night_time = tools.convert_ISO_to_epoch('2015-01-01 00:30:00', '%Y-%m-%d %H:%M:%S')
         zonemane = "US/Pacific"
         offset = -480
-        local_epoch_night_time = night_time - offset*60
+        local_epoch_night_time = night_time - offset*60 #removing night events must happen in the user's local time
         test_in_range_night_event = [[90, local_epoch_night_time, 249]] #remove
         test_high_night_event = [[90, local_epoch_night_time, 250]] #keep
 
@@ -30,7 +29,6 @@ class Test_Bolus(Chai):
 
         result_kept = bolus.remove_night_boluses(test_high_night_event, zonemane) 
         self.assertEqual(expected_kept_event, np.ndarray.tolist(result_kept))
-
 
 def suite():
     """ Gather all the tests from this module in a test suite """
