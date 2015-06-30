@@ -73,10 +73,15 @@ def bolus_or_wizard(solution):
             wizard_events.append(row)
     return bolus_events, wizard_events
 
-def get_carb_ratio(start_time, time, zonename):
+def get_carb_ratio(start_time, curr_time, zonename):
+    """ Get carb ratio from settings
+        start_time -- a datetime object in this format: YYYY-MM-DD HH:MM:SS
+        curr_time -- a string representation of time in deviceTime format: YYYY-MM-DDTHH:MM:MS
+        zonename -- ame of timezone in effect 
+    """
     access_settings = settings.settings(start_time, zonename)[0]
     carb_ratio_sched = access_settings["carbRatio"]
-    carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, time, "carbRatio")
+    carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
     return carb_ratio
 
 def check_bolus_time(timestamp, no_bolus):
