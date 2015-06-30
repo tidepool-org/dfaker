@@ -53,7 +53,7 @@ def remove_night_boluses(carb_time_gluc, zonename):
         hour = datetime.fromtimestamp(time_val, pytz.timezone(zonename)).hour
         if hour > 6 and hour < 23:
             keep.append(row)
-        keep if glucose level is high and a high enough insuling dose is given
+        #keep if glucose level is high and a high enough insuling dose is given
         elif int(gluc_val) not in range(0,250) and carb_val > 25:
             keep.append(row)
     np_keep = np.array(keep)
