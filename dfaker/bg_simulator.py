@@ -2,12 +2,14 @@ import numpy as np
 from scipy.integrate import odeint 
 import random
 
-def simulator(initial_carbs, initial_sugar, digestion_rate, insulin_rate, minutes, start_time):
+def simulator(initial_carbs, initial_sugar, digestion_rate, insulin_rate, total_minutes, start_time):
     """Constructs a blood glucose equation using the following initial paremeters:
         initial_carbs -- the intake amount of carbs 
         initial_sugar -- the baseline value of glucose at time zero
         digestion_rate -- how quickly food is digested
-        insulin_rate -- how quickly insulin is released.
+        insulin_rate -- how quickly insulin is released
+        total_minutes -- amount of time (in minutes) this simulation will last_carbs
+        start_time -- start time (in minutes), point on timeline where this simulation will begin
     """
     def model_func(y, t):
         Ci = y[0]
@@ -17,7 +19,7 @@ def simulator(initial_carbs, initial_sugar, digestion_rate, insulin_rate, minute
         return [f0, f1]
 
     y0 = [initial_carbs, initial_sugar]
-    t = np.linspace(start_time, start_time + minutes, minutes / 5) #timestep every 5 minutes 
+    t = np.linspace(start_time, start_time + total_minutes, total_minutes / 5) #timestep every 5 minutes 
     carb_gluc = odeint(model_func, y0, t)
     cgt = zip(carb_gluc, t)
     carb_gluc_time = []
@@ -70,11 +72,11 @@ def simulate(num_days):
         carbs = assign_carbs(sugar, last_carbs, sugar_in_range)
         digestion = random.uniform(0.04, 0.08)
         insulin_rate = random.uniform(0.002, 0.05)
-        minutes = random.uniform(100, 200) #change this to higher numbers for less frequent events
-        result = simulator(carbs, sugar, digestion, insulin_rate, minutes, next_time)
+        total_minutes = random.randint(100, 200) #total minutes for a single simulation
+        result = simulator(carbs, sugar, digestion, insulin_rate, total_minutes, next_time)
         simulator_data.append(result)       
         sugar = result[-1][1]
-        next_time += minutes + 5 #add 5 minutes to avoid duplicates 
+        next_time += total_minutes + 5 #add 5 extra minutes to avoid duplicates 
         last_carbs = carbs
     stitched = []
     for array in simulator_data:

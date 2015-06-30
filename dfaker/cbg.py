@@ -21,7 +21,7 @@ def apply_loess(solution, num_days, gaps):
     cbg_time = solution[:, 2]
     #smoothing blood glucose eqn
     lowess = sm.nonparametric.lowess
-    smoothing_distance = 1.4 #1.4 minutes
+    smoothing_distance = 1.5 #1.5 minutes
     fraction = (smoothing_distance / (num_days * 60 * 24)) * 100
     result = lowess(cbg_gluc, cbg_time, frac=fraction, is_sorted=True)
     smoothed_cbg_time = result[:, 0]
