@@ -13,8 +13,8 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
         carbs -- a list of carb events at each timestep
         timesteps -- a list of epoch times 
         bolus_data -- of list of bolus data dictionaries to calculate IOB
-        no_wizard -- a list of lists of start and end times during which there should be no bolus events
-                    for example, when the pump was suspended 
+        no_wizard -- a list of lists of start and end times (in epoch time) during which 
+                    there should be no bolus events, for example, if the pump is suspended 
         zonename -- name of timezone in effect 
     """
     wizard_data = []
@@ -38,8 +38,8 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
             wizard_reading["recommended"] = {}
             wizard_reading["recommended"]["carb"] = tools.round_to(wizard_reading["carbInput"] / wizard_reading["insulinCarbRatio"])
             wizard_reading["recommended"]["correction"] =  0
-            wizard_reading["recommended"]["net"] = (tools.round_to(wizard_reading["recommended"]["carb"] 
-                                                   + wizard_reading["recommended"]["correction"] - wizard_reading["insulinOnBoard"]))
+            wizard_reading["recommended"]["net"] = (wizard_reading["recommended"]["carb"] + wizard_reading["recommended"]["correction"]
+                                                    - tools.round_to(wizard_reading["insulinOnBoard"]))
             normal_or_square = random.randint(0, 9)
             if normal_or_square == 1 or normal_or_square == 2: #decide which type bolus to generate 
                 which_bolus = dual_square_bolus
