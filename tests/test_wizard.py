@@ -7,22 +7,6 @@ import dfaker.tools as tools
 
 class Test_Wizard(Chai):
 
-    """
-    def __init__(self):
-        self.start_time = datetime(2015, 1, 1, 0, 0 ,0)
-        #populate gluc list with some fake glucose values
-        self.gluc = [100, 217, 61]
-        #populate carb list with some fake carb values (corresponding to a meal)
-        self.carbs = [90, 16, 61]
-        #populate timesteps with some fake time values later than start_time
-        self.timesteps = [tools.convert_ISO_to_epoch('2015-01-01 15:00:00', '%Y-%m-%d %H:%M:%S'),
-                    tools.convert_ISO_to_epoch('2015-01-01 19:30:00', '%Y-%m-%d %H:%M:%S'),
-                    tools.convert_ISO_to_epoch('2015-01-02 09:12:00', '%Y-%m-%d %H:%M:%S')]
-        #test that wizard events formats correctly even when no bolus and no_wizard data is given
-        self.bolus_data = []
-        self.no_wizard = []
-        self.zonename = 'US/Pacific'
-    """
     def test_wizard_format_no_iob(self):
         """ Test that wizard events meet format requirements"""
         start_time = datetime(2015, 1, 1, 0, 0 ,0)
@@ -63,7 +47,7 @@ class Test_Wizard(Chai):
         self.assertEqual(net_reccomendation3, expected_reccomendation3)
 
     def test_wizard_format_with_iob(self):
-        """ Test insulin ob board calculations are taken into account when given wizard reccomendation"""
+        """ Test insulin on board calculations are taken into account when giving a wizard reccomendation"""
         start_time = datetime(2015, 1, 1, 0, 0 ,0)
         gluc = [100]
         carbs = [90]

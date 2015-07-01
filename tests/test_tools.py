@@ -48,7 +48,7 @@ class Test_Tools(Chai):
         self.assertEqual(expected_int, tools.convert_to_mmol(input_int))
 
     def test_float_rounding(self):
-        """ Test rounding foalts to specified percision """
+        """ Test rounding floats to specified percision """
         #Note, the round_to function always trunctuates the result to three decimal points
         positive_float = 6.124849333
         negative_float = -7.89209123
