@@ -75,11 +75,10 @@ def insulin_on_board(iob_dict, timestamp):
         else find the closest timestamp and if it is within 5 minutes, use that value
         else return 0 as the insulin_on_board value 
     """
-    if timestamp in iob_dict:
-        return iob_dict[timestamp]
-    else:
+    if iob_dict:
+        if timestamp in iob_dict:
+            return iob_dict[timestamp]
         closest_timestamp = min(iob_dict.keys(), key=lambda k: abs(k-timestamp))
         if abs(timestamp - closest_timestamp) <= 300: #approximate to 5 minutes max
             return iob_dict[closest_timestamp]
-        else:
-            return 0
+    return 0

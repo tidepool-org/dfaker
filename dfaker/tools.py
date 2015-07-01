@@ -8,7 +8,9 @@ def is_dst(zonename, date):
 
 def get_offset(zonename, date):
     local_tz = pytz.timezone(zonename) 
-    if is_dst(zonename, date):
+    if zonename == 'UTC':
+        return 0
+    elif is_dst(zonename, date):
         return local_tz.utcoffset(date, is_dst=True).total_seconds() / 60
     else:
         return local_tz.utcoffset(date, is_dst=False).total_seconds() / 60
@@ -58,6 +60,7 @@ def get_rate_from_settings(schedule, time, name):
     """Obtains a rate or amount from settings based on time of day
        If name is basalSchedules, returns rate as well as start and stop times
        Otherwise, if name is carbRatio or insulinSensitivity, returns just amount
+       Returned results are in mmol/L.
     """
     t = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S')
     if name == "basalSchedules": #account for variation in naming 
