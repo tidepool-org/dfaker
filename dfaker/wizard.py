@@ -6,13 +6,13 @@ from . import insulin_on_board
 from . import settings
 from . import tools
 
-def wizard(start_time, gluc, carbs, timesteps, basal_data, bolus_data, no_wizard, zonename):
+def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
     """ Construct a wizard event
         start_time -- a datetime object with a timezone
         gluc -- a list of glucose values at each timestep 
         carbs -- a list of carb events at each timestep
         timesteps -- a list of epoch times 
-        basal_data -- of list of basal data dictionaries to calculate IOB
+        bolus_data -- of list of bolus data dictionaries to calculate IOB
         no_wizard -- a list of lists of start and end times during which there should be no bolus events
                     for example, when the pump was suspended 
         zonename -- name of timezone in effect 
