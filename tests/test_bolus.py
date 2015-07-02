@@ -1,6 +1,5 @@
 from chai import Chai
 import unittest
-from datetime import datetime
 import numpy as np
 
 import dfaker.tools as tools

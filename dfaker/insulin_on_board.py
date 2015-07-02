@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta 
-
 from . import tools
 
 def format_bolus_for_iob_calc(bolus_data):

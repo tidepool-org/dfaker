@@ -43,7 +43,6 @@ def smbg(gluc, timesteps, stick_freq, zonename):
     remove_night = remove_night_smbg(gluc, timesteps, zonename)   
     time_gluc = randomize_smbg(remove_night, stick_freq)
     for value, timestamp in time_gluc:
-        randomize_time = random.randrange(-5000, 5000)
         smbg_reading = {}
         smbg_reading = common_fields.add_common_fields('smbg', smbg_reading, timestamp, zonename)
         #add a randomized value to smbg value so cbg and smbg are not always identical

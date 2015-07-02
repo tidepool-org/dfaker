@@ -1,6 +1,4 @@
 import random
-import time
-
 
 from . import common_fields
 from . import tools

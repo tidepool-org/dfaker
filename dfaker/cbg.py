@@ -1,4 +1,3 @@
-import random
 import statsmodels.api as sm
 
 from . import common_fields
