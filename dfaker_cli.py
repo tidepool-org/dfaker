@@ -126,7 +126,7 @@ def main():
     #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
     #make wizard events
-    wizard_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
+    wizard_data, iob_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
                          no_wizard=pump_suspended, zonename=params['zone']))
     #make cbg values 
     cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
@@ -142,6 +142,19 @@ def main():
     else:
         json.dump(dfaker, fp=file_object, sort_keys=True, indent=4) 
     file_object.close()
+    
+    iob_list = []
+    for entry in sorted(iob_data):
+        new_entry = {"time": entry * 1000,
+                 "insulinOnBoard": iob_data[entry]}
+        iob_list.append(new_entry)
+
+
+    #write iob dict to json file
+    iob_file = open('iob-data.json', mode='w')
+    json.dump(iob_list, fp=iob_file, sort_keys=True, indent=4)
+    iob_file.close()
+
     sys.exit(0)
 
 if __name__ == '__main__':
