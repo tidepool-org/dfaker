@@ -60,7 +60,7 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
             
             iob_dict = insulin_on_board.update_iob_dict(iob_dict, [associated_bolus], access_settings["actionTime"])
             wizard_data.append(wizard_reading)
-    return wizard_data
+    return wizard_data, iob_dict
 
 def override_wizard(carb_val):
     """ Returns a new carb value when the user overrides the recommended bolus
