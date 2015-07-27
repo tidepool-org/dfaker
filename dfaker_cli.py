@@ -12,7 +12,7 @@
 # -g,           --gaps               Add gaps to fake data
 # -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import json
 import argparse 
@@ -25,6 +25,7 @@ from dfaker.cbg import cbg, apply_loess
 from dfaker.smbg import smbg
 from dfaker.basal import scheduled_basal
 import dfaker.tools as tools
+import random
 
 def parse(args, params):
     if args.date:
@@ -56,7 +57,7 @@ def parse(args, params):
         try:
             params['num_days'] = int(args.num_days)
         except:
-            print('Wrong input, num_days argument should be a number')
+            print('Wrong input, num_days argument should be an integer')
             sys.exit(1)
 
     if args.file:
@@ -82,6 +83,76 @@ def parse(args, params):
             print('Invalid frequency: {:s}. Please choose between high, average and low'.format(args.smbg_freq))
             sys.exit(1)
 
+    if args.travel_info:
+        try: #check days traveled is a positive int
+            days_travelled = int(args.travel_info[0])
+            if days_travelled <= 0:
+               # print('Wrong input, first parameter must be a positive integer')
+                sys.exit(1)
+        except:
+            print('Wrong input, first parameter must be a positive integer')
+            sys.exit(1)
+        
+        try: #check proper format of start travel date
+            start_travel = datetime.strptime(args.travel_info[1], '%Y-%m-%dT%H:%M')
+        except:
+            print('Wrong input: {:s}. second parameter must be a datetime string in the following format: YYYY-MM-DDTHH:MM'.format(args.travel_info[1]))
+            sys.exit(1)
+
+        #check validity of travel dates
+        if params['datetime'] > start_travel:
+            print('Invalif input: travel date entered is before start date of simulation')
+            sys.exit(1)
+        if params['datetime'] + timedelta(days=params['num_days']) < start_travel:
+            print('Invalid input: travel date entered is after end date of simulation')
+            sys.exit(1)
+
+        #check destination timezone is a proper zone 
+        destination_timezone = args.travel_info[2]
+        if destination_timezone not in pytz.common_timezones:
+            print('Wrong input, third parameter must be a proper timezone. Unrecognized zone: {:s}'.format(destination_timezone))
+            sys.exit(1)
+
+        #update params 
+        params['travel_days'] = days_travelled
+        params['travel_zone'] = destination_timezone
+        params['start_travel_date'] = start_travel
+
+    return params
+
+def dfaker(num_days, zonename, date_time, gaps, smbg_freq):
+    """ Generate data for a set num_days within a single timezone
+    """
+    dfaker = [] 
+    solution = bg_simulator.simulate(num_days)
+
+    start_time = datetime(date_time.year, date_time.month, date_time.day, date_time.hour, date_time.minute)
+    zone_offset = tools.get_offset(zonename, start_time)
+
+    cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(solution, num_days=num_days, gaps=gaps)
+    cbg_timesteps = tools.make_timesteps(start_time, zone_offset, cbg_time)
+    smbg_timesteps = tools.make_timesteps(start_time, zone_offset, smbg_time)
+
+    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = (
+            generate_boluses(solution, start_time, zonename=zonename, zone_offset=zone_offset))
+
+    #make settings 
+    settings_data = settings(start_time, zonename=zonename)
+    #make basal values
+    basal_data, pump_suspended = scheduled_basal(start_time, num_days=num_days, zonename=zonename)
+    #make bolus values 
+    bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=zonename)
+    #make wizard events
+    wizard_data, iob_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
+                         no_wizard=pump_suspended, zonename=zonename))
+    #make cbg values 
+    cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=zonename)
+    #make smbg values 
+    smbg_data = smbg(smbg_gluc, smbg_timesteps, stick_freq=smbg_freq, zonename=zonename)
+
+    dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data
+    return dfaker
+
 def main():
     params = {
         'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'), #default datetime settings
@@ -90,7 +161,10 @@ def main():
         'file' : 'device-data.json', #default json file name 
         'minify' : False, #compact storage option false by default 
         'gaps' : False, #randomized gaps in data, off by default 
-        'smbg_freq' : 6 #default number of fingersticks per day
+        'smbg_freq' : 6, #default number of fingersticks per day
+        'travel_days' : 0, #by default, no traveling occures during simulation period
+        'travel_zone' : None, 
+        'start_travel_date' : None
     }
 
     parser = argparse.ArgumentParser()
@@ -102,58 +176,34 @@ def main():
     parser.add_argument('-m', '--minify', dest='minify', action='store_true', help='Minify the json file')
     parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
     parser.add_argument('-s', '--smbg', dest='smbg_freq', help='Freqency of fingersticks a day: high, average or low')
+    (parser.add_argument('-r', '--travel', dest='travel_info', nargs=3,
+            help='Num days traveling + space + Date and time in the following format: YYYY-MM-DDTHH:MM + space + destination timezone'))
     args = parser.parse_args()
-    parse(args, params)
+    params = parse(args, params)
 
-    dfaker = [] 
-    solution = bg_simulator.simulate(params['num_days'])
-
-    d = params['datetime']
-    start_time = datetime(d.year, d.month, d.day, d.hour, d.minute)
-    zone_offset = tools.get_offset(params['zone'], start_time)
-
-    cbg_gluc, cbg_time, smbg_gluc, smbg_time = apply_loess(solution, num_days=params['num_days'], gaps=params['gaps'])
-    cbg_timesteps = tools.make_timesteps(start_time, zone_offset, cbg_time)
-    smbg_timesteps = tools.make_timesteps(start_time, zone_offset, smbg_time)
-
-    b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = (
-            generate_boluses(solution, start_time, zonename=params['zone'], zone_offset=zone_offset))
-
-    #make settings 
-    settings_data = settings(start_time, zonename=params['zone'])
-    #make basal values
-    basal_data, pump_suspended = scheduled_basal(start_time, num_days=params['num_days'], zonename=params['zone'])
-    #make bolus values 
-    bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=params['zone'])
-    #make wizard events
-    wizard_data, iob_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
-                         no_wizard=pump_suspended, zonename=params['zone']))
-    #make cbg values 
-    cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=params['zone'])
-    #make smbg values 
-    smbg_data = smbg(smbg_gluc, smbg_timesteps, stick_freq=params['smbg_freq'], zonename=params['zone'])
-
-    dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data
+    #if travelling occurs during simulation, generate data in multiple timezones 
+    if params['travel_days']:
+        days_before = (params['start_travel_date'] - params['datetime']).days + (params['start_travel_date'] - params['datetime']).seconds / (60*60*24)
+        days_after = params['num_days'] - days_before - params['travel_days']
+        end_travel = params['start_travel_date'] + timedelta(days=params['travel_days'])
+    
+        before_travel= dfaker(days_before, params['zone'], params['datetime'], params['gaps'], params['smbg_freq'])
+        during_travel = dfaker(params['travel_days'], params['travel_zone'], params['start_travel_date'], params['gaps'], params['smbg_freq'])
+        after_travel = dfaker(days_after, params['zone'], end_travel, params['gaps'], params['smbg_freq'])
+    
+        result = before_travel + during_travel + after_travel
+        
+    #if not travelling, generate data within a single timezone
+    else:
+        result = dfaker(params['num_days'], params['zone'], params['datetime'], params['gaps'], params['smbg_freq'])
 
     #write to json file
     file_object = open(params['file'], mode='w')
     if params['minify']: #for most compact file: separators=(',', ':')
-        json.dump(dfaker, fp=file_object, sort_keys=True, separators=(',', ':'))
+        json.dump(result, fp=file_object, sort_keys=True, separators=(',', ':'))
     else:
-        json.dump(dfaker, fp=file_object, sort_keys=True, indent=4) 
+        json.dump(result, fp=file_object, sort_keys=True, indent=4) 
     file_object.close()
-    
-    iob_list = []
-    for entry in sorted(iob_data):
-        new_entry = {"time": entry * 1000,
-                 "insulinOnBoard": iob_data[entry]}
-        iob_list.append(new_entry)
-
-
-    #write iob dict to json file
-    iob_file = open('iob-data.json', mode='w')
-    json.dump(iob_list, fp=iob_file, sort_keys=True, indent=4)
-    iob_file.close()
 
     sys.exit(0)
 
