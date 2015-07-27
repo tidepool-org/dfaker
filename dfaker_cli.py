@@ -1,5 +1,6 @@
-#usage: py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS] [-f FILE]
-#                 [-m] [-g] [-s SMBG_FREQ]
+#usage: dfaker_cli.py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS]
+#                     [-f FILE] [-m] [-g] [-s SMBG_FREQ]
+#                     [-r TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO]
 #
 #optional arguments:
 # -h,           --help               show this help message and exit
@@ -11,6 +12,10 @@
 # -m,           --minify             Minify the json file
 # -g,           --gaps               Add gaps to fake data
 # -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
+# -r TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO, 
+#               --travel TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO
+#                                    Num days traveling + space + Date and time in the following 
+#                                    format: YYYY-MM-DDTHH:MM + space + destination timezone
 
 from datetime import datetime, timedelta
 import pytz
