@@ -73,6 +73,9 @@ def simulate(num_days):
         digestion = random.uniform(0.04, 0.08)
         insulin_rate = random.uniform(0.002, 0.05)
         total_minutes = random.randint(100, 200) #total minutes for a single simulation
+        #make sure total minutes does not exceed max num_days
+        if total_minutes + next_time > days_in_minutes:
+            total_minutes = days_in_minutes - next_time
         result = simulator(carbs, sugar, digestion, insulin_rate, total_minutes, next_time)
         simulator_data.append(result)       
         sugar = result[-1][1]
