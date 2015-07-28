@@ -1,5 +1,5 @@
 #usage: dfaker_cli.py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS]
-#                     [-f FILE] [-m] [-g] [-s SMBG_FREQ] [-r]
+#                     [-f FILE] [-m] [-g] [-s SMBG_FREQ] [-r] [-p PUMP]
 #
 #optional arguments:
 # -h,           --help               show this help message and exit
@@ -12,6 +12,7 @@
 # -g,           --gaps               Add gaps to fake data
 # -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
 # -r,           --travel             Add travel option
+# -p PUMP,      --pump PUMP          Specify pump name
 
 from datetime import datetime
 import pytz
@@ -81,6 +82,20 @@ def parse(args, params):
     if args.travel:
         params['travel'] = True
 
+    if args.pump:
+        if args.pump == 'OmniPod':
+            params['pump_name'] = 'OmniPod'
+        elif args.pump == 'Tandem':
+            params['pump_name'] = 'Tandem'
+        elif args.pump == 'Medtronic':
+            params['pump_name'] = 'Medtronic'
+        else:
+            print('Invalid pump name. Current options include: OmniPod, Tandem or Medtronic.')
+            sys.exit(1)
+
+    if not args.pump:
+        print("Prefered pump name not entered, revert to default pump: Medtronic")
+
     return params
 
 def main():
@@ -92,7 +107,8 @@ def main():
         'minify' : False, #compact storage option false by default 
         'gaps' : False, #randomized gaps in data, off by default 
         'smbg_freq' : 6, #default number of fingersticks per day
-        'travel': False #no travelling takes place by default 
+        'travel': False, #no travelling takes place by default 
+        'pump_name': 'Medtronic' #default pump name
     }
 
     parser = argparse.ArgumentParser()
@@ -105,16 +121,18 @@ def main():
     parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
     parser.add_argument('-s', '--smbg', dest='smbg_freq', help='Freqency of fingersticks a day: high, average or low')
     parser.add_argument('-r', '--travel', dest='travel', action='store_true', help='Add travel option')
+    parser.add_argument('-p', '--pump', dest='pump', help='Specify pump name')
     args = parser.parse_args()
     params = parse(args, params)
 
     #if travelling occurs during simulation, generate data in multiple timezones 
     if params['travel']:
         result = (travel(params['num_days'], params['datetime'],params['zone'], 
-                params['gaps'], params['smbg_freq']))
+                params['gaps'], params['smbg_freq'], params['pump_name']))
     #if not travelling, generate data within a single timezone
     else:
-        result = dfaker(params['num_days'], params['zone'], params['datetime'], params['gaps'], params['smbg_freq'])
+        result = (dfaker(params['num_days'], params['zone'], params['datetime'], params['gaps'],
+                 params['smbg_freq'], params['pump_name']))
 
     #write to json file
     file_object = open(params['file'], mode='w')
