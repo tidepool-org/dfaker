@@ -46,26 +46,27 @@ class Test_Basal(Chai):
 
         #check that expected rates match results
         for entry in res_dict:
-            if entry['deliveryType'] == 'scheduled':
-                entry_time = tools.convert_ISO_to_epoch(entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
-                if entry_time in segment_one:
-                    self.assertEqual(entry['rate'], rate_one)
-                elif entry_time in segment_two:
-                    self.assertEqual(entry['rate'], rate_two)
-                elif entry_time in segment_three:
-                    self.assertEqual(entry['rate'], rate_three)
-                elif entry_time in segment_four:
-                    self.assertEqual(entry['rate'], rate_four)
-                elif entry_time in segment_five:
-                    self.assertEqual(entry['rate'], rate_five)
-                elif entry_time in segment_six:
-                    self.assertEqual(entry['rate'], rate_six)
-                elif entry_time in segment_seven:
-                    self.assertEqual(entry['rate'], rate_seven)
-                elif entry_time in segment_eight:
-                    self.assertEqual(entry['rate'], rate_eight)
-                else:
-                    self.assertEqual(entry['rate'], rate_nine)
+            if entry["type"] == "basal":
+                if entry['deliveryType'] == 'scheduled':
+                    entry_time = tools.convert_ISO_to_epoch(entry["deviceTime"], '%Y-%m-%dT%H:%M:%S')
+                    if entry_time in segment_one:
+                        self.assertEqual(entry['rate'], rate_one)
+                    elif entry_time in segment_two:
+                        self.assertEqual(entry['rate'], rate_two)
+                    elif entry_time in segment_three:
+                        self.assertEqual(entry['rate'], rate_three)
+                    elif entry_time in segment_four:
+                        self.assertEqual(entry['rate'], rate_four)
+                    elif entry_time in segment_five:
+                        self.assertEqual(entry['rate'], rate_five)
+                    elif entry_time in segment_six:
+                        self.assertEqual(entry['rate'], rate_six)
+                    elif entry_time in segment_seven:
+                        self.assertEqual(entry['rate'], rate_seven)
+                    elif entry_time in segment_eight:
+                        self.assertEqual(entry['rate'], rate_eight)
+                    else:
+                        self.assertEqual(entry['rate'], rate_nine)
 
 def suite():
     """ Gather all the tests from this module in a test suite """
