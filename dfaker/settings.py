@@ -14,6 +14,11 @@ def settings(start_time, zonename, pump_name):
     utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
     time_in_seconds = int(utc_time - offset*60)
     settings = common_fields.add_common_fields('settings', settings, time_in_seconds, zonename)
+    #pump specific settings:
+    if pump_name == 'Medtronic':
+        settings["bgTarget"] = Medtronic_settings()
+    elif pump_name == 'OmniPod':
+        settings["bgTarget"] = omniPod_settings()
     settings["activeSchedule"] = "standard"
     settings["actionTime"] = random.randint(3,4) #3 or 4 hours for insulin to decay completely
     settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0},
@@ -25,11 +30,6 @@ def settings(start_time, zonename, pump_name):
                                                 {"rate": 0.75, "start": 32400000},
                                                 {"rate": 0.8, "start": 54000000},
                                                 {"rate": 0.85, "start": 61200000}]}
-    bgTarget_low = random.randrange(80, 120, 10)
-    bgTarget_high = random.randrange(bgTarget_low, 140, 10)
-    settings["bgTarget"] = [{"high": tools.convert_to_mmol(bgTarget_high), 
-                             "low": tools.convert_to_mmol(bgTarget_low), 
-                             "start": 0}]
     settings["carbRatio"] = [{"amount": random.randint(9, 15), "start": 0},
                              {"amount": random.randint(9, 15), "start": 36000000},
                              {"amount": random.randint(9, 15), "start": 72000000}]
@@ -40,3 +40,24 @@ def settings(start_time, zonename, pump_name):
     settings["units"] = { "bg": "mg/dL","carb": "grams"}
     settings_data.append(settings)
     return settings_data
+
+def omniPod_settings():
+    target = random.randrange(90, 110, 10)
+    bgTarget_high = random.randrange(target + 10, 140, 10)
+    bgTarget = [{"high": tools.convert_to_mmol(bgTarget_high), 
+                             "target": tools.convert_to_mmol(target), 
+                             "start": 0}]
+    return bgTarget
+
+def Medtronic_settings():
+    bgTarget_low = random.randrange(80, 120, 10)
+    bgTarget_high = random.randrange(bgTarget_low + 10, 140, 10)
+    bgTarget = [{"high": tools.convert_to_mmol(bgTarget_high), 
+                             "low": tools.convert_to_mmol(bgTarget_low), 
+                             "start": 0}]
+    return bgTarget
+
+
+
+
+
