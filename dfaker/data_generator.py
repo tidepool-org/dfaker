@@ -9,7 +9,7 @@ from .cbg import cbg, apply_loess
 from .smbg import smbg
 from .basal import scheduled_basal
 
-def dfaker(num_days, zonename, date_time, gaps, smbg_freq):
+def dfaker(num_days, zonename, date_time, gaps, smbg_freq, pump_name):
     """ Generate data for a set num_days within a single timezone
     """
     dfaker = [] 
@@ -26,14 +26,14 @@ def dfaker(num_days, zonename, date_time, gaps, smbg_freq):
             generate_boluses(solution, start_time, zonename=zonename, zone_offset=zone_offset))
 
     #make settings 
-    settings_data = settings(start_time, zonename=zonename)
+    settings_data = settings(start_time, zonename=zonename, pump_name=pump_name)
     #make basal values
-    basal_data, pump_suspended = scheduled_basal(start_time, num_days=num_days, zonename=zonename)
+    basal_data, pump_suspended = scheduled_basal(start_time, num_days=num_days, zonename=zonename, pump_name=pump_name)
     #make bolus values 
-    bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=zonename)
+    bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=zonename, pump_name=pump_name)
     #make wizard events
     wizard_data, iob_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
-                         no_wizard=pump_suspended, zonename=zonename))
+                         no_wizard=pump_suspended, zonename=zonename, pump_name=pump_name))
     #make cbg values 
     cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=zonename)
     #make smbg values 

@@ -6,7 +6,7 @@ from . import insulin_on_board
 from . import settings
 from . import tools
 
-def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
+def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, pump_name):
     """ Construct a wizard event
         start_time -- a datetime object with a timezone
         gluc -- a list of glucose values at each timestep 
@@ -18,7 +18,7 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
         zonename -- name of timezone in effect 
     """
     wizard_data = []
-    access_settings = settings.settings(start_time, zonename)[0]
+    access_settings = settings.settings(start_time, zonename, pump_name)[0]
     iob_dict = insulin_on_board.create_iob_dict(bolus_data, access_settings["actionTime"])
     for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
         if check_bolus_time(timestamp, no_wizard):    
@@ -50,11 +50,11 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename):
             
             override  = override_wizard(carb_val)
             if override:
-                associated_bolus = which_bolus(override, timestamp, start_time, no_wizard, zonename)
+                associated_bolus = which_bolus(override, timestamp, start_time, no_wizard, zonename, pump_name)
                 wizard_reading["bolus"] = associated_bolus["id"]
                 wizard_data.append(associated_bolus)
             else:
-                associated_bolus = which_bolus(carb_val, timestamp, start_time, no_wizard, zonename)
+                associated_bolus = which_bolus(carb_val, timestamp, start_time, no_wizard, zonename, pump_name)
                 wizard_reading["bolus"] = associated_bolus["id"]
                 wizard_data.append(associated_bolus)
             

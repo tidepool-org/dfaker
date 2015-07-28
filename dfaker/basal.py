@@ -7,14 +7,14 @@ from .device_meta import suspend_pump, device_meta
 from . import settings
 from . import tools
 
-def scheduled_basal(start_time, num_days, zonename):
+def scheduled_basal(start_time, num_days, zonename, pump_name):
     """ Construct basal events based on a basal schedule from settings
         start_time -- a datetime object with a timezone
         num_days -- integer reflecting total number of days over which data is generated
         zonename -- name of timezone in effect
     """
     basal_data, pump_suspended = [], []  
-    access_settings = settings.settings(start_time, zonename=zonename)[0]
+    access_settings = settings.settings(start_time, zonename=zonename, pump_name=pump_name)[0]
     offset = tools.get_offset(zonename, start_time)
     utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
     next_time = int(utc_time - offset*60)

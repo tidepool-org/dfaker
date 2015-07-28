@@ -3,7 +3,7 @@ import random
 from . import common_fields
 from . import tools
 
-def settings(start_time, zonename):
+def settings(start_time, zonename, pump_name):
     """ Construct a settings object
         start_time -- a datetime object with a timezone
         zonename -- name of timezone in effect

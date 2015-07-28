@@ -73,13 +73,13 @@ def bolus_or_wizard(solution):
             wizard_events.append(row)
     return bolus_events, wizard_events
 
-def get_carb_ratio(start_time, curr_time, zonename):
+def get_carb_ratio(start_time, curr_time, zonename, pump_name):
     """ Get carb ratio from settings
         start_time -- a datetime object in this format: YYYY-MM-DD HH:MM:SS
         curr_time -- a string representation of time in deviceTime format: YYYY-MM-DDTHH:MM:MS
         zonename -- ame of timezone in effect 
     """
-    access_settings = settings.settings(start_time, zonename)[0]
+    access_settings = settings.settings(start_time, zonename, pump_name)[0]
     carb_ratio_sched = access_settings["carbRatio"]
     carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
     return carb_ratio
@@ -95,7 +95,7 @@ def check_bolus_time(timestamp, no_bolus):
             return False
     return True 
 
-def bolus(start_time, carbs, timesteps, no_bolus, zonename):
+def bolus(start_time, carbs, timesteps, no_bolus, zonename, pump_name):
     """ Construct bolus events 
         start_time -- a datetime object with a timezone
         carbs -- a list of carb events at each timestep
@@ -108,21 +108,21 @@ def bolus(start_time, carbs, timesteps, no_bolus, zonename):
     for value, timestamp in zip(carbs, timesteps):      
         normal_or_square = random.randint(0, 9) 
         if normal_or_square == 1 or normal_or_square == 2: #2 in 10 are dual square
-            result = dual_square_bolus(value, timestamp, start_time, no_bolus, zonename)
+            result = dual_square_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name)
         elif normal_or_square == 3: #1 in 10 is a sqaure bolus
-            result = square_bolus(value, timestamp, start_time, no_bolus, zonename)
+            result = square_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name)
         else: #8 of 10 are normal boluses 
-            result = normal_bolus(value, timestamp, start_time, no_bolus, zonename)
+            result = normal_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name)
         if result: 
             bolus_data.append(result)
     return bolus_data
 
-def dual_square_bolus(value, timestamp, start_time, no_bolus, zonename):
+def dual_square_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name):
     if check_bolus_time(timestamp, no_bolus):
         bolus_entry = {}
         bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, zonename)
         bolus_entry["subType"] = "dual/square"
-        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename)
+        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename, pump_name)
         insulin = int(value) / carb_ratio
         bolus_entry["normal"] = tools.round_to(random.uniform(insulin / 3, insulin / 2)) 
         bolus_entry["extended"] = tools.round_to(insulin - bolus_entry["normal"]) 
@@ -134,23 +134,23 @@ def dual_square_bolus(value, timestamp, start_time, no_bolus, zonename):
                            bolus_entry["extended"], bolus_entry["duration"], timestamp, zonename))
         return bolus_entry  
 
-def square_bolus(value, timestamp, start_time, no_bolus, zonename):
+def square_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name):
     if check_bolus_time(timestamp, no_bolus):
         bolus_entry = {}
         bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, zonename)
         bolus_entry["subType"] = "square"
         bolus_entry["duration"] = random.randrange(1800000, 5400000, 300000)
-        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename)
+        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename, pump_name)
         insulin = tools.round_to(int(value) / carb_ratio)
         bolus_entry["extended"] = insulin
         return bolus_entry
 
-def normal_bolus(value, timestamp, start_time, no_bolus, zonename):
+def normal_bolus(value, timestamp, start_time, no_bolus, zonename, pump_name):
     if check_bolus_time(timestamp, no_bolus):
         bolus_entry = {}
         bolus_entry = common_fields.add_common_fields('bolus', bolus_entry, timestamp, zonename)
         bolus_entry["subType"] = "normal"
-        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename)
+        carb_ratio = get_carb_ratio(start_time, bolus_entry["deviceTime"], zonename, pump_name)
         insulin = tools.round_to(int(value) / carb_ratio)
         bolus_entry["normal"] = insulin
 

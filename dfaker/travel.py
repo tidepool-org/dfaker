@@ -4,22 +4,22 @@ import random
 from datetime import timedelta
 from .data_generator import dfaker
 
-def travel(num_days, start_date, curr_zone, gaps, smbg_freq):
+def travel(num_days, start_date, curr_zone, gaps, smbg_freq, pump_name):
     """ Arrange travel simulation over the courseo of num_days
         If num days is greater than 30, allow for multiple travel events
     """
     result = []
     if num_days <= 30: #generate only 1 travel event
-        result = travel_event(num_days, start_date, curr_zone, gaps, smbg_freq)
+        result = travel_event(num_days, start_date, curr_zone, gaps, smbg_freq, pump_name)
     else:
         times_travelled = random.randint(2, math.ceil(num_days / 30))
         segment = num_days / times_travelled
         for _ in range(0, times_travelled):
-            result += travel_event(segment, start_date, curr_zone, gaps, smbg_freq)
+            result += travel_event(segment, start_date, curr_zone, gaps, smbg_freq, pump_name)
             start_date += timedelta(days=segment)
     return result
 
-def travel_event(num_days, start_date, curr_zone, gaps, smbg_freq): 
+def travel_event(num_days, start_date, curr_zone, gaps, smbg_freq, pump_name): 
     """ Simulate a single travel event over the course of num_days
     """
     result = []
@@ -43,9 +43,9 @@ def travel_event(num_days, start_date, curr_zone, gaps, smbg_freq):
     end_travel = travel_start_date + timedelta(days=travel_days)
 
     #generate data for each segment
-    before_travel= dfaker(days_before, curr_zone, start_date, gaps, smbg_freq)
-    during_travel = dfaker(travel_days, travel_zone, start_travel, gaps, smbg_freq)
-    after_travel = dfaker(days_after, curr_zone, end_travel, gaps, smbg_freq)
+    before_travel= dfaker(days_before, curr_zone, start_date, gaps, smbg_freq, pump_name)
+    during_travel = dfaker(travel_days, travel_zone, start_travel, gaps, smbg_freq, pump_name)
+    after_travel = dfaker(days_after, curr_zone, end_travel, gaps, smbg_freq, pump_name)
 
     result += before_travel + during_travel + after_travel
     return result
@@ -62,5 +62,4 @@ def select_travel_destination(curr_zone):
     if destination == curr_zone:
         print("enter")
         destination = select_travel_destination(curr_zone)
-        #destination = possible_destinations[random_index + 1]
     return destination
