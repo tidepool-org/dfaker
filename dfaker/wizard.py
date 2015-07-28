@@ -33,8 +33,13 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, 
             carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, wizard_reading["deviceTime"], "carbRatio")
             wizard_reading["insulinSensitivity"] = sensitivity
             wizard_reading["insulinCarbRatio"] = carb_ratio
-            wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
-                                            "low": access_settings["bgTarget"][0]["low"]}
+            #pump specific input:
+            if pump_name == 'Medtronic':
+                wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
+                                                "low": access_settings["bgTarget"][0]["low"]}
+            elif pump_name == 'OmniPod':
+                wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
+                                                "target": access_settings["bgTarget"][0]["target"]}
             wizard_reading["recommended"] = {}
             wizard_reading["recommended"]["carb"] = tools.round_to(wizard_reading["carbInput"] / wizard_reading["insulinCarbRatio"])
             wizard_reading["recommended"]["correction"] =  0

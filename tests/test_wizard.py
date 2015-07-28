@@ -22,7 +22,8 @@ class Test_Wizard(Chai):
         bolus_data = []
         no_wizard = []
         zonename = 'US/Pacific'
-        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename) 
+        pump_name = 'Medtronic'
+        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, pump_name) 
         #make sure that for every wizrd event, a bolus event is also created (ie there shold be 6 total events)
         self.assertEqual(len(res_dict), 6)
 
@@ -63,7 +64,8 @@ class Test_Wizard(Chai):
                         "uploadId": "upid_abcdefghijklmnop"}]
         no_wizard = []
         zonename = 'US/Pacific'
-        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename) 
+        pump_name = 'Medtronic'
+        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, pump_name) 
         
         #check that insulin on board value is correct
         expected_iob = tools.convert_to_mmol(10)
@@ -92,7 +94,8 @@ class Test_Wizard(Chai):
         no_wizard = []
         #zonemae here is in UTC so that timestems reflect time and deviceTime to make time checking easier 
         zonename = 'UTC'
-        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename)
+        pump_name = 'Medtronic'
+        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, pump_name)
 
         #expected sensitivity:
         expected_early_morning = tools.convert_to_mmol(30)
@@ -129,7 +132,8 @@ class Test_Wizard(Chai):
         no_wizard = [[no_wizard_start1, no_wizard1_end1], 
                      [no_wizard_start2, no_wizard1_end2]]
         zonename = 'US/Pacific'
-        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename) 
+        pump_name = 'Medtronic'
+        res_dict, iob_dict = wizard.wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, pump_name) 
 
         #after no_wizard events are removed, 2 wizard events + 2 bolus events should remain
         self.assertEqual(len(res_dict), 4)

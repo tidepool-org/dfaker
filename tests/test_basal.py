@@ -12,7 +12,8 @@ class Test_Basal(Chai):
         start_time = datetime(2015, 1, 1, 0, 0, 0) 
         num_days = 1
         zonename = 'US/Pacific'
-        res_dict, suspend_pump = basal.scheduled_basal(start_time, num_days, zonename)
+        pump_name = 'Medtronic'
+        res_dict, suspend_pump = basal.scheduled_basal(start_time, num_days, zonename, pump_name)
 
         #expected segments and rate (from settings)
         segment_one = range(tools.convert_ISO_to_epoch('2015-01-01 00:00:00', '%Y-%m-%d %H:%M:%S'), 
