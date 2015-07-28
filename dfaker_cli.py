@@ -1,6 +1,5 @@
 #usage: dfaker_cli.py [-h] [-z ZONE] [-d DATE] [-t TIME] [-n NUM_DAYS]
-#                     [-f FILE] [-m] [-g] [-s SMBG_FREQ]
-#                     [-r TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO]
+#                     [-f FILE] [-m] [-g] [-s SMBG_FREQ] [-r]
 #
 #optional arguments:
 # -h,           --help               show this help message and exit
@@ -12,17 +11,13 @@
 # -m,           --minify             Minify the json file
 # -g,           --gaps               Add gaps to fake data
 # -s SMBG_FREQ, --smbg SMBG_FREQ     Freqency of fingersticks a day: high, average or low
-# -r TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO, 
-#               --travel TRAVEL_INFO TRAVEL_INFO TRAVEL_INFO
-#                                    Num days traveling + space + Date and time in the following 
-#                                    format: YYYY-MM-DDTHH:MM + space + destination timezone
+# -r,           --travel             Add travel option
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import json
 import argparse 
 import sys
-import random
 
 from dfaker.data_generator import dfaker
 from dfaker.travel import travel
@@ -110,20 +105,13 @@ def main():
     parser.add_argument('-g', '--gaps', dest='gaps', action='store_true', help='Add gaps to fake data')
     parser.add_argument('-s', '--smbg', dest='smbg_freq', help='Freqency of fingersticks a day: high, average or low')
     parser.add_argument('-r', '--travel', dest='travel', action='store_true', help='Add travel option')
-    
-    #(parser.add_argument('-r', '--travel', dest='travel_info', nargs=3,
-     #       help='Num days traveling + space + Date and time in the following format: YYYY-MM-DDTHH:MM + space + destination timezone'))
-    
     args = parser.parse_args()
     params = parse(args, params)
 
     #if travelling occurs during simulation, generate data in multiple timezones 
     if params['travel']:
-
-        #call travel.py
-        result = (travel(num_days=params['num_days'], start_date=params['datetime'], curr_zone=params['zone'], 
-            gaps=params['gaps'], smbg_freq=params['smbg_freq']))
-        
+        result = (travel(params['num_days'], params['datetime'],params['zone'], 
+                params['gaps'], params['smbg_freq']))
     #if not travelling, generate data within a single timezone
     else:
         result = dfaker(params['num_days'], params['zone'], params['datetime'], params['gaps'], params['smbg_freq'])
