@@ -80,6 +80,10 @@ def get_carb_ratio(start_time, curr_time, zonename, pump_name):
         zonename -- ame of timezone in effect 
     """
     access_settings = settings.settings(start_time, zonename, pump_name)[0]
+    if pump_name == 'Tandem':
+        carb_ratio_sched = access_settings["carbRatios"]["standard"]
+        carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
+        return carb_ratio
     carb_ratio_sched = access_settings["carbRatio"]
     carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
     return carb_ratio
