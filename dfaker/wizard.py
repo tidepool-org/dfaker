@@ -39,6 +39,7 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, 
                     wizard_reading["bgTarget"] = { "high": access_settings["bgTarget"][0]["high"],
                                                     "target": access_settings["bgTarget"][0]["target"]}
             elif pump_name == 'Tandem':
+                wizard_reading["bgTarget"] = {"target": access_settings["bgTargets"]["standard"][0]["target"]}
                 carb_ratio_sched = access_settings["carbRatios"]["standard"]
                 sensitivity_sched = access_settings["insulinSensitivities"]["standard"]
             

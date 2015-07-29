@@ -68,10 +68,8 @@ def tandem_settings():
                                           {"amount": tools.convert_to_mmol(40), "start": 18000000},
                                           {"amount": tools.convert_to_mmol(50), "start": 39600000},
                                           {"amount": tools.convert_to_mmol(35), "start": 68400000}]}
-    bgTarget_low = random.randrange(80, 120, 10)
-    bgTarget_high = random.randrange(bgTarget_low + 10, 140, 10)
-    bg_targets = {'standard': [{"high": tools.convert_to_mmol(bgTarget_high), 
-                             "low": tools.convert_to_mmol(bgTarget_low), 
+    target = random.randrange(90, 110, 10)
+    bg_targets = {'standard': [{"target": tools.convert_to_mmol(target),
                              "start": 0}]}
     return carb_ratios, insulin_sensitivities, bg_targets
 
