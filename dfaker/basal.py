@@ -25,13 +25,18 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
         basal_entry = common_fields.add_common_fields('basal', basal_entry, next_time, zonename)
         basal_entry["deliveryType"] = "scheduled"   
         basal_entry["scheduleName"] = "standard"
+        
+        #get basal schedule from settings
         schedule = access_settings["basalSchedules"]["standard"] 
         basal_entry["rate"], start, corrected_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds
         zone = timezone(zonename)
+        
+        #localize start and end date to get acurate basal times in local time (not in UTC)
         start_date, end_date = datetime.fromtimestamp(next_time), datetime.fromtimestamp(next_time + duration)
         localized_start, localized_end = zone.localize(start_date), zone.localize(end_date)
         start_offset, end_offset = tools.get_offset(zonename, start_date), tools.get_offset(zonename, end_date)
+        #account for time chance (DST)
         if start_offset != end_offset:
             diff = end_offset - start_offset
             localized_end = localized_end - timedelta(minutes=diff)
@@ -42,6 +47,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
             basal_entry["duration"] = int(elapsed_seconds * 1000)
         basal_data.append(basal_entry)
        
+        #Create temp basal event to override scheduled basal
         if randomize_temp_basal() and start_offset == end_offset: #avoid temp basal during DST change
             randomize_start = random.randrange(300000, 3000000, 60000) #randomize start of temp basal in ms  
             start_temp = next_time + randomize_start/1000 
@@ -50,6 +56,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
             basal_entry["duration"] -= diff
             basal_data.append(temp_entry)
             next_time += (basal_entry["duration"] / 1000) + (temp_duration / 1000)
+        #Create suspened basal event to override scheduled basal
         elif suspend_pump() and start_offset == end_offset:
             basal_entry["deliveryType"] = "suspend" 
             del basal_entry["rate"]
@@ -58,6 +65,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
             basal_entry["duration"] = suspend_duration
             pump_suspended.append([next_time, next_time + basal_entry["duration"]/1000]) #keep track of start/end times for suspension 
             next_time += basal_entry["duration"] / 1000 
+        #update time to generate next basal
         else:
             next_time += basal_entry["duration"] / 1000
     return basal_data, pump_suspended
