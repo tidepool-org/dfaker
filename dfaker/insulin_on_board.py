@@ -15,10 +15,8 @@ def format_bolus_for_iob_calc(bolus_data):
         else:
             duration = bolus_entry["duration"]/1000/60 #in minutes
             if duration > 0:
-                #num_segments = duration / 5 #5 minute segments
                 extended_insulin = bolus_entry["extended"]
                 insulin_per_segment = extended_insulin / duration
-                #insulin_per_segment = extended_insulin / num_segments
                 if bolus_entry['subType'] == "dual/square":
                     initial_insulin = bolus_entry["normal"]
                     time_vals.append([timestamp, initial_insulin])
@@ -26,8 +24,7 @@ def format_bolus_for_iob_calc(bolus_data):
                 end_time = next_time + duration*60 #duration in seconds
                 while next_time < end_time:
                     time_vals.append([next_time, insulin_per_segment])
-                    next_time += 60
-                    #next_time += 5 * 60 #next time -- 5 minutes later (in seconds)  
+                    next_time += 60 #1 minutes
     return time_vals            
         
 def create_iob_dict(bolus_data, action_time):
@@ -45,10 +42,10 @@ def create_iob_dict(bolus_data, action_time):
         slope = initial_value / action_time
         iob_dict = add_iob(iob_dict, time, initial_value, slope, step)
         while remaining_time > 5: #continue to calculate iob values until complete decay
-            step += float(1/60) #5 min in hours
+            step += float(1/60) #1 min in hours
             time += 1 * 60 
             iob_dict = add_iob(iob_dict, time, initial_value, slope, step)
-            remaining_time -= 1 #subtract 5 minutes from remaining time 
+            remaining_time -= 1 #subtract 1 minute from remaining time 
     return iob_dict
 
 def add_iob(curr_dict, time, initial_value, slope, step):
