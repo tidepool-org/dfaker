@@ -1,15 +1,13 @@
 #Dfaker Developer Documentation
 
---------------
 ##Purpose
 
 Dfaker is a fake diabetes data generator designed to fit Tidepool's data model description. Running dfaker will generate a JSON-formatted file with a desired number of days of fake diabetes data. For a reference to the data model and the format specifications, [click here](http://developer.tidepool.io/data-model/v1/). 
 
 ##Requirements and setup
 
-dfaker was developed using Python3. For required packages and installation, refer to the readme file.  
+dfaker was developed using Python3. For required packages and installation, refer to the [README.md](https://github.com/tidepool-org/dfaker/blob/master/README.md) file.  
 
---------------
 ##Repository Organization
 
 - `dfaker/` contains the main data generation file as well as modules for each unique datatype. Important files include:
@@ -22,7 +20,6 @@ dfaker was developed using Python3. For required packages and installation, refe
 - `dfaker_cli.py` contains the command line tools to generate data according to desired specifications. 
 - `device-data.json` is the resulting json file generated after running dfaker.
 
---------------
 ##Using the command line tools
 
 The command line tools were built using python's argparse. They allow the user to override the default dfaker settings and customize the output data file. Default settings are stored in a params dictionary and look like this: 
@@ -82,7 +79,6 @@ optional arguments:
  -p PUMP,      --pump PUMP          Specify pump name
 ```
 
---------------
 ##Data generation overview
 
 The calls for the data generation occur in the `dfaker()` function in `data_generator.py`. The output json file is formated as a list called `dfaker` that contains a dictionary entry for each event. A call to each datatype module generates dictionary entries of that type which are added in order to the `dfaker` list. 
@@ -91,20 +87,20 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
 
 - The first step in `dfaker()` is to obtain time-value pairs that represent cbg data. 
     + The `simulate()` function in `bg_simulator.py` takes `num_days`, and calls the `simulator()` function over and over again over the course of the specified days, essentially stitching the returned numpy lists to create the entire dataset.
-    + The `simulator()` function is the most critical function of the dfaker project. It takes `initial_carbs`, `initial_sugar`, `digestion_rate`, `insulin_rate`, `total_minutes` and `start_time` as initial values, and, using a differential equation from a study on [blood glucose levels over time](http://scholarcommons.usf.edu/cgi/viewcontent.cgi?article=4830&context=ujmm), solves for the blood glucose value (in mg/dL) for each 5 minute time-period over the course of `total_minutes`. The returned value is a numpy list containing inner lists. Each inner list has the following format: 
+    + The `simulator()` function is the most critical function of the dfaker project. It takes `initial_carbs`, `initial_sugar`, `digestion_rate`, `insulin_rate`, `total_minutes` and `start_time` as initial values, and, using a differential equation from a study on [blood glucose levels over time](http://scholarcommons.usf.edu/cgi/viewcontent.cgi?article=4830&context=ujmm), solves for the blood glucose value (in mg/dL) for each 5 minute time-period over the course of `total_minutes`. The returned value is a numpy list containing inner lists. Each inner list contains three elements represented in a tabular manner below:
  
-        | [carb Value      | Glucose Value  | Time Representation ]|
-        |------------------|----------------|----------------------|
-        | [ 4.17760096e+01 | 1.16500409e+02 | 0                   ]|
-        | [ 2.89573162e+01 | 1.28418084e+02 | 5                   ]|
-        | [ 2.00719534e+01 | 1.36048205e+02 | 10                  ]|
-        | [ (...)          | (...)          | (...)               ]|
+        | carb Value     | Glucose Value  | Time Representation |
+        |----------------|----------------|---------------------|
+        | 4.17760096e+01 | 1.16500409e+02 | 0                   |
+        | 2.89573162e+01 | 1.28418084e+02 | 5                   |
+        | 2.00719534e+01 | 1.36048205e+02 | 10                  |
+        | (...)          | (...)          | (...)               |
 
         - The **carb values** represent a randomized carb intake (in grams).
         - The **glucose values** are derived from the differential equation (in mg/dL).
         - The **time representation** stands for the amount of elapsed minutes since the beginning of the simulation.
         - (...) stands to indicate the list goes on. 
-- Next, the time-values lists are passed to `apply_loess()` in `cbg.py`. The glucose values are extracted from the solution to form smbg data (which will be filtered later), and cbg data.
+- Next, the inner carb-glucose-time lists are passed to `apply_loess()` in `cbg.py`. The glucose values are extracted from the solution to form smbg data (which will be filtered later), and cbg data.
     + Using `statsmodels.api`, a loess smoothing curve is applied to the cbg data, to make the results look more realistic. 
 - Finally, the time representation floats are converted to epoch timesteps using the `make_timesteps()` function in `tools.py`.
 
@@ -124,7 +120,6 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
         - `temp_basal` - a temporary basal that overrides the scheduled basal for a randomized period of time.
         - `suspened_basal` - a manual suspension of the pump during which no basal event takes place.
             + A `deviceMeta` datatype with `subType = status` event is also created in `device_meta.py` to reflect the suspension of the pump.  
-
 - The bolus datatype is added to dfaker next. Many times of boluses can be generated. The decision making as to which bolus should be generated is randomized in the `bolus()` function in `bolus.py`.
     + `normal_bolus` - bolus dosage given at the indicated `deviceTime`.
     + `sqaure_bolus` - bolus dose spread over indicated `duration`.
@@ -144,7 +139,6 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
           + smbg values over 600 or under 20 are considered out of range.
 - All datatypes share common fields that can be found in `common_fields.py`. 
 
---------------
 ##Travel Overview
 
 - To simulate travel, multiple calls to `dfaker()` take place in `travel.py`. Each call to `dfaker()` occurs in a different timezone. 
@@ -154,10 +148,9 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
 - When `num_days` is greater than 30, multiple calls to `travel_event()` may take place. 
 - Each time a change of timezone occurs, a `deviceMeta` datatype with `subType = timeChange` is also created.
 
---------------
 ##Calculating Insulin on Board
 
-- To calculate insulin ob board in `insulin_on_board.py`, bolus data is first formated in the `format_bolus_for_iob_calc()` function.
+- To calculate insulin on board in `insulin_on_board.py`, bolus data is first formated in the `format_bolus_for_iob_calc()` function.
     + Normal bolus events are appended to `time_vals` as lists containing a timestamp and a dose value.   
     + Square bolus and dual square bolus events are more complicated because the insulin is not given all at once and therefore the iob calculation is different.
         - the insulin is divided into one minute segments over the course of `duration`.
@@ -166,12 +159,11 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
 - To calculate IOB a linear decay equation is used in `add_iob()`. This function is called over and over again until each insulin dose from `time_vals` goes down to zero.
 - To find an iob value at any point in time, the `insulin_on_board()` can be used. It will approximate to within a 5 minute period of the desired timestamp and search the iob_dict. If no value is found, it will return 0.
 
---------------
 ##Future Steps
 
 Adding datatypes as the data model is further developed in the future could be desired. Adding a new datatype is pretty simple. The following information will be helpful to adding new datatypes:
-    - A new datatype should be contained within its own module.
-    - Each datatype entry must be a dictionary.
-    - Calling `common_fields.add_common_fields(name, datatype, timestamp, zonename)` is an easy way to populate all the common fields required for any datatype.
-    - All other fields should be configured according to data model specifications. 
+- A new datatype should be contained within its own module.
+- Each datatype entry must be a dictionary.
+- Calling `common_fields.add_common_fields(name, datatype, timestamp, zonename)` is an easy way to populate all the common fields required for any datatype.
+- All other fields should be configured according to data model specifications. 
 
