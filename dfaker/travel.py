@@ -73,6 +73,5 @@ def select_travel_destination(curr_zone):
     destination = possible_destinations[random_index]
     #make sure destination does not match curr_zone
     if destination == curr_zone:
-        print("enter")
         destination = select_travel_destination(curr_zone)
     return destination

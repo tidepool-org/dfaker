@@ -100,9 +100,9 @@ def parse(args, params):
 
 def main():
     params = {
-        'datetime' : datetime.strptime('2015-03-03 0:0', '%Y-%m-%d %H:%M'), #default datetime settings
+        'datetime' : datetime.strptime('2015-01-01 00:00', '%Y-%m-%d %H:%M'), #default datetime settings
         'zone' : 'US/Pacific', #default zone
-        'num_days' : 10, #default number of days to generate data for
+        'num_days' : 180, #default number of days to generate data for
         'file' : 'device-data.json', #default json file name 
         'minify' : False, #compact storage option false by default 
         'gaps' : False, #randomized gaps in data, off by default 
