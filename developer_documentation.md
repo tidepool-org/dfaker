@@ -1,16 +1,17 @@
 #Dfaker Developer Documentation
 
 Table of contents:
-- [Purpose](#Purpose)
-- [Repository Organization](#Repository Organization)
-- [Using the command line tools](#Using the command line tools)
-- [Data generation overview](#Data generation overview)
-    - [Getting an equation for a set `num_days`](#Getting an equation for a set `num_days`)
-    - [Generating boluses](#Generating boluses)
-    - [Adding Datatypes to dfaker](#Adding Datatypes to dfaker)
-- [Travel Overview](#Travel Overview)
-- [Calculating Insulin on Board](#Calculating Insulin on Board)
-- [Future Steps](#Future Steps)
+- [Purpose](#purpose)
+- [Requirements and setup](#requirements-and-setup)
+- [Repository Organization](#repository-organization)
+- [Using the command line tools](#using-the-command-line-tools)
+- [Data generation overview](#data-generation-overview)
+    - [Getting an equation for a set num_days](#getting-an-equation-for-a-set-num_days)
+    - [Generating boluses](#generating-boluses)
+    - [Adding Datatypes to dfaker](#adding-datatypes-to-dfaker)
+- [Travel Overview](#travel-overview)
+- [Calculating Insulin on Board](#calculating-insulin-on-board)
+- [Future Steps](#future-steps)
 
 ##Purpose
 
