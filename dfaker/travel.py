@@ -3,7 +3,7 @@ import math
 import random
 from datetime import timedelta
 from .data_generator import dfaker
-from .device_meta import device_meta
+from .device_meta import device_meta_time_change
 
 def travel(num_days, start_date, curr_zone, gaps, smbg_freq, pump_name):
     """ Arrange travel simulation over the courseo of num_days
@@ -52,12 +52,12 @@ def travel_event(num_days, start_date, curr_zone, gaps, smbg_freq, pump_name):
 
     #add device meta event for each timechange
     timestamp = tools.convert_ISO_to_epoch(str(travel_start_date - timedelta(minutes=curr_zone_offset)), '%Y-%m-%d %H:%M:%S')
-    time_change_meta_event = device_meta('timeChange', timestamp, curr_zone, travel_start_date, start_travel, travel_zone)
+    time_change_meta_event = device_meta_time_change(timestamp, curr_zone, travel_start_date, start_travel, travel_zone)
     before_travel.append(time_change_meta_event)
 
     timestamp = tools.convert_ISO_to_epoch(str(end_travel - timedelta(minutes=new_zone_offset)), '%Y-%m-%d %H:%M:%S')
     end_travel_in_timezone = start_travel + timedelta(days=travel_days)
-    time_change_meta_event = device_meta('timeChange', timestamp, travel_zone,end_travel_in_timezone, end_travel, curr_zone)
+    time_change_meta_event = device_meta_time_change(timestamp, travel_zone,end_travel_in_timezone, end_travel, curr_zone)
     during_travel.append(time_change_meta_event)
 
     result += before_travel + during_travel + after_travel

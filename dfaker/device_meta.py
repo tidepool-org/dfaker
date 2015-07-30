@@ -2,16 +2,7 @@ import random
 
 from . import common_fields
 
-def device_meta(subType, timestamp, zonename, time_before_change, time_after_change, new_zone):
-    """Create a device meta event based on the subType specified"""
-    if subType == "status":
-        meta_entry, duration = status(timestamp, zonename)
-        return meta_entry, duration
-    elif subType == "timeChange":
-        meta_entry = time_change(timestamp, zonename, time_before_change, time_after_change, new_zone)
-        return meta_entry
-
-def time_change(timestamp, zonename, time_before_change, time_after_change, new_zone):
+def device_meta_time_change(timestamp, zonename, time_before_change, time_after_change, new_zone):
     """ Generate a time change meta event for traveling purposes"""
     meta_entry = {}
     meta_entry = common_fields.add_common_fields('deviceMeta', meta_entry, timestamp, zonename)
@@ -24,7 +15,14 @@ def time_change(timestamp, zonename, time_before_change, time_after_change, new_
     meta_entry["subType"] = "timeChange"
     return meta_entry
 
-def status(timestamp, zonename):
+def device_meta_alarm(timestamp, zonename):
+    meta_entry = {}
+    meta_entry = common_fields.add_common_fields('deviceMeta', meta_entry, timestamp, zonename)
+    meta_entry["subType"] = "alarm"
+    meta_entry["alarmType"] = "low_insulin"
+    return meta_entry
+
+def device_meta_status(timestamp, zonename):
     """ Generate a statys meta event to suspend pump"""
     meta_entry = {}
     meta_entry = common_fields.add_common_fields('deviceMeta', meta_entry, timestamp, zonename)

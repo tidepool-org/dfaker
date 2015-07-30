@@ -3,7 +3,7 @@ import random
 from pytz import timezone
 
 from . import common_fields 
-from .device_meta import suspend_pump, device_meta
+from .device_meta import suspend_pump, device_meta_status
 from . import settings
 from . import tools
 
@@ -60,7 +60,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
         elif suspend_pump() and start_offset == end_offset:
             basal_entry["deliveryType"] = "suspend" 
             del basal_entry["rate"]
-            meta_entry, suspend_duration = device_meta("status", next_time, zonename, None, None, None)
+            meta_entry, suspend_duration = device_meta_status(next_time, zonename)
             basal_data.append(meta_entry)
             basal_entry["duration"] = suspend_duration
             pump_suspended.append([next_time, next_time + basal_entry["duration"]/1000]) #keep track of start/end times for suspension 
