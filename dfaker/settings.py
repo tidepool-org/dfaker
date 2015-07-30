@@ -72,8 +72,4 @@ def tandem_settings():
     bg_targets = {'standard': [{"target": tools.convert_to_mmol(target),
                              "start": 0}]}
     return carb_ratios, insulin_sensitivities, bg_targets
-
-
-
-
-
+    
