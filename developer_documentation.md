@@ -1,5 +1,17 @@
 #Dfaker Developer Documentation
 
+Table of contents:
+- [Purpose](#Purpose)
+- [Repository Organization](#Repository Organization)
+- [Using the command line tools](#Using the command line tools)
+- [Data generation overview](#Data generation overview)
+    - [Getting an equation for a set `num_days`](#Getting an equation for a set `num_days`)
+    - [Generating boluses](#Generating boluses)
+    - [Adding Datatypes to dfaker](#Adding Datatypes to dfaker)
+- [Travel Overview](#Travel Overview)
+- [Calculating Insulin on Board](#Calculating Insulin on Board)
+- [Future Steps](#Future Steps)
+
 ##Purpose
 
 Dfaker is a fake diabetes data generator designed to fit Tidepool's data model description. Running dfaker will generate a JSON-formatted file with a desired number of days of fake diabetes data. For a reference to the data model and the format specifications, [click here](http://developer.tidepool.io/data-model/v1/). 
