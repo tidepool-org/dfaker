@@ -35,7 +35,7 @@ dfaker was developed using Python3. For required packages and installation, refe
 
 ##Using the command line tools
 
-The command line tools were built using python's argparse. They allow the user to override the default dfaker settings and customize the output data file. Default settings are stored in a params dictionary and look like this: 
+The command line tools were built using python's argparse. They allow the user to override the default dfaker settings and customize the output data file. Default settings are stored in a `params` object and look like this: 
 ```python
 params = {
         'datetime' : datetime.strptime('2015-01-01 00:00', '%Y-%m-%d %H:%M'), #default datetime settings
@@ -68,6 +68,8 @@ To override any of the default settings, the user can specify desired options us
 - `-r` sets the travel parameter to True, generating data within multiple timezones.
 - `-p` allows the user to specify the pump used for data generation.
     + Currently, only `Medtronic`, `Tandem` and `OmniPod` pumps are supported. 
+    + Each pumps results in slightly different settings objects 
+    + If no pump is specified, the default is set to Medtronic and a warning is logged to the user. 
 
 Running the help command
 ```
@@ -94,13 +96,13 @@ optional arguments:
 
 ##Data generation overview
 
-The calls for the data generation occur in the `dfaker()` function in `data_generator.py`. The output json file is formated as a list called `dfaker` that contains a dictionary entry for each event. A call to each datatype module generates dictionary entries of that type which are added in order to the `dfaker` list. 
+The calls for the data generation occur in the `dfaker()` function in `data_generator.py`. The output json file is formated as a list called `dfaker` that contains an object for each event. A call to each datatype module generates objects of that type which are added in order to the `dfaker` list. 
 
 ###Getting an equation for a set `num_days`
 
 - The first step in `dfaker()` is to obtain time-value pairs that represent cbg data. 
-    + The `simulate()` function in `bg_simulator.py` takes `num_days`, and calls the `simulator()` function over and over again over the course of the specified days, essentially stitching the returned numpy lists to create the entire dataset.
-    + The `simulator()` function is the most critical function of the dfaker project. It takes `initial_carbs`, `initial_sugar`, `digestion_rate`, `insulin_rate`, `total_minutes` and `start_time` as initial values, and, using a differential equation from a study on [blood glucose levels over time](http://scholarcommons.usf.edu/cgi/viewcontent.cgi?article=4830&context=ujmm), solves for the blood glucose value (in mg/dL) for each 5 minute time-period over the course of `total_minutes`. The returned value is a numpy list containing inner lists. Each inner list contains three elements represented in a tabular manner below:
+    + The `simulate()` function in `bg_simulator.py` takes `num_days`, and calls the `simulator()` function over and over again over the course of the specified days, essentially stitching the returned [NumPy](http://www.numpy.org/) lists to create the entire dataset. 
+    + The `simulator()` function is the most critical function of the dfaker project. It takes `initial_carbs`, `initial_sugar`, `digestion_rate`, `insulin_rate`, `total_minutes` and `start_time` as initial values, and, using a differential equation from a study on [blood glucose levels over time](http://scholarcommons.usf.edu/cgi/viewcontent.cgi?article=4830&context=ujmm), solves for the blood glucose value (in mg/dL) for each 5 minute time-period over the course of `total_minutes`. The returned value is a NumPy list containing inner lists. Each inner list contains three elements represented in a tabular manner below:
  
         | carb Value     | Glucose Value  | Time Representation |
         |----------------|----------------|---------------------|
@@ -120,13 +122,13 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
 ###Generating boluses
 
 - To create bolus events, the `generate_boluses()` function in `bolus.py` is called. It takes `solution` (generated earlier, refer to table above), `start_time`, `zonename`, and `zone_offset`, and filters to keep significant carb events (carb values > 10 grams). 
-- After removing most bolus events that occur in the nighttime (because people rarely eat in the middle of the night), cleaning up clusters of boluses that are unrealistically close to each other, and randomly sorting bolus events into regular bolus events or bolus events accompanied by a wizard event, the `generate_boluses()` function returns numpy lists for carb events and timesteps for both wizard and bolus events (which will be used later to generate these datatypes).
+- After removing most bolus events that occur in the nighttime (because people rarely eat in the middle of the night), cleaning up clusters of boluses that are unrealistically close to each other, and randomly sorting bolus events into regular bolus events or bolus events accompanied by a wizard event, the `generate_boluses()` function returns NumPy lists for carb events and timesteps for both wizard and bolus events (which will be used later to generate these datatypes).
 
 ###Adding Datatypes to dfaker
 
 - The first datatype added to dfaker is always the `settings` type. This helps access settings more easily at other points in the code if necessary, because settings will always be the zeroth element in dfaker.
 - Next is basal data. Basal data is generated according to the `basalSchedules` entry generated in the `settings` datatype.
-    + A call to basal returns a list of dictionaries representing all basal events as well as a `pump_suspended` list
+    + A call to basal returns a list of objects representing all basal events as well as a `pump_suspended` list
         - `pump_suspended` is a list of lists. Each inner list contains a start and an end timestemp during which the pump was suspended. This data is used later to remove bolus or wizard events during suspension period.
     + Three types of basal entries could take place:
         - `scheduled_basal` - regular basal according to settings schedule.
@@ -168,7 +170,7 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
     + Square bolus and dual square bolus events are more complicated because the insulin is not given all at once and therefore the iob calculation is different.
         - the insulin is divided into one minute segments over the course of `duration`.
         - Each 1-minute segment is then added to `time-vals` as a list containing a timestamp and a dose of insulin per segment.
-- An insulin on board dictionary is created with `create_iob_dict()` and can later be updated (when more boluses are generated) with `update_iob_dict()`. The IOB dict stores timestamps and corresponding iob values at these timestamps. 
+- An insulin on board object is created with `create_iob_dict()` and can later be updated (when more boluses are generated) with `update_iob_dict()`. The IOB dict stores timestamps and corresponding iob values at these timestamps. 
 - To calculate IOB a linear decay equation is used in `add_iob()`. This function is called over and over again until each insulin dose from `time_vals` goes down to zero.
 - To find an iob value at any point in time, the `insulin_on_board()` can be used. It will approximate to within a 5 minute period of the desired timestamp and search the iob_dict. If no value is found, it will return 0.
 
