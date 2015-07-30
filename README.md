@@ -1,13 +1,24 @@
 #Tidepool Dfaker 
 
-dfaker is a fake data generator that simulates blood glucose and other diabetes data over time. 
+dfaker is a fake data generator that simulates diabetes data over time. 
 
-**Note**, This project is under active development. 
+**Note**, this project is under active development. 
 
 #Set up
 
-dfaker runs with python3. In addition, Using the Anaconda scientific Python distribution is recommended as the easiest way of getting all project dependencies. 
+dfaker runs with python3. In addition, using the Anaconda scientific Python distribution is recommended as the easiest way of getting all project dependencies. 
 The anaconda installation for python3 can be [found here](http://continuum.io/downloads#py34).
+
+Alternatively, installing the following packages will work as well:
+* pytz
+* numpy
+* statsmodels
+* nose
+* pandas
+* patsy
+* python-dateutil
+* scipy
+* six
 
 #Credits
 

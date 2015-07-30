@@ -1,16 +1,15 @@
 import numpy as np 
-import matplotlib.pyplot as plt 
 from scipy.integrate import odeint 
 import random
-from scipy import interpolate
-import statsmodels.api as sm
 
-def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insulin_rate=0.0224, minutes=100, start_time=0):
+def simulator(initial_carbs, initial_sugar, digestion_rate, insulin_rate, total_minutes, start_time):
     """Constructs a blood glucose equation using the following initial paremeters:
         initial_carbs -- the intake amount of carbs 
         initial_sugar -- the baseline value of glucose at time zero
         digestion_rate -- how quickly food is digested
-        insulin_rate -- how quickly insulin is released.
+        insulin_rate -- how quickly insulin is released
+        total_minutes -- amount of time (in minutes) this simulation will last_carbs
+        start_time -- start time (in minutes), point on timeline where this simulation will begin
     """
     def model_func(y, t):
         Ci = y[0]
@@ -20,7 +19,7 @@ def simulator(initial_carbs=121.7, initial_sugar=90, digestion_rate=0.0453, insu
         return [f0, f1]
 
     y0 = [initial_carbs, initial_sugar]
-    t = np.linspace(start_time, start_time + minutes, minutes / 5) #timestep every 5 minutes 
+    t = np.linspace(start_time, start_time + total_minutes, total_minutes / 5) #timestep every 5 minutes 
     carb_gluc = odeint(model_func, y0, t)
     cgt = zip(carb_gluc, t)
     carb_gluc_time = []
@@ -58,7 +57,7 @@ def assign_carbs(sugar, last_carbs, sugar_in_range):
         carbs = random.triangular(-50, 100, 60)
     return carbs
 
-def stitch_func(num_days=180):
+def simulate(num_days):
     days_in_minutes = num_days * 24 * 60
     sugar = random.uniform(80, 180) #start with random sugar level
     last_carbs = random.uniform(-60, 300)
@@ -73,11 +72,14 @@ def stitch_func(num_days=180):
         carbs = assign_carbs(sugar, last_carbs, sugar_in_range)
         digestion = random.uniform(0.04, 0.08)
         insulin_rate = random.uniform(0.002, 0.05)
-        minutes = random.uniform(100, 200) #change this to higher numbers for less frequent events
-        result = simulator(carbs, sugar, digestion, insulin_rate, minutes, next_time)
+        total_minutes = random.randint(100, 200) #total minutes for a single simulation
+        #make sure total minutes does not exceed max num_days
+        if total_minutes + next_time > days_in_minutes:
+            total_minutes = days_in_minutes - next_time
+        result = simulator(carbs, sugar, digestion, insulin_rate, total_minutes, next_time)
         simulator_data.append(result)       
         sugar = result[-1][1]
-        next_time += minutes + 5 #add 5 minutes to avoid duplicates 
+        next_time += total_minutes + 5 #add 5 extra minutes to avoid duplicates 
         last_carbs = carbs
     stitched = []
     for array in simulator_data:
