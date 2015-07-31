@@ -24,7 +24,7 @@ dfaker was developed using Python3. For required packages and installation, refe
 ##Repository Organization
 
 - `dfaker/` contains the main data generation file as well as modules for each unique datatype. Important files include:
-    + `data_generator.py` defines the core dfaker function that calls each datatypes and aggregates fake data for a set number of days within a single timezone.
+    + `data_generator.py` defines the core dfaker function that calls each datatype and aggregates fake data for a set number of days within a single timezone.
     + `tools.py` contains important tools used throughout dfaker to generate data.
     + `bg_simulator.py` generates the blood glucose simulator function used to create cbg data upon which every other datatype is dependent. 
     + `insulin_on_board.py` provides functions that are used to calculate and store insulin on board values for any given time during simulation.
@@ -42,7 +42,7 @@ params = {
         'zone' : 'US/Pacific', #default zone
         'num_days' : 180, #default number of days to generate data for
         'file' : 'device-data.json', #default json file name 
-        'minify' : False, #compact storage option false by default 
+        'minify' : False, #compact storage option, false by default 
         'gaps' : False, #randomized gaps in data, off by default 
         'smbg_freq' : 6, #default number of fingersticks per day
         'travel': False, #no traveling takes place by default 
@@ -65,7 +65,7 @@ To override any of the default settings, the user can specify desired options us
 - `-g` selecting this options creates randomized gaps in the data.
 - `-s` allows the user to set a desired fingerstick frequency. 
     + The only options for this command are `high` (average of 8 fingetersticks a day), `average` (6 a day) or `low` (3 a day).
-- `-r` sets the travel parameter to True, generating data within multiple timezones.
+- `-r` sets the travel parameter to `True`, generating data within multiple timezones.
 - `-p` allows the user to specify the pump used for data generation.
     + Currently, only `Medtronic`, `Tandem` and `OmniPod` pumps are supported. 
     + Each pumps results in slightly different settings objects 
@@ -135,7 +135,7 @@ The calls for the data generation occur in the `dfaker()` function in `data_gene
         - `temp_basal` - a temporary basal that overrides the scheduled basal for a randomized period of time.
         - `suspened_basal` - a manual suspension of the pump during which no basal event takes place.
             + A `deviceMeta` datatype with `subType = status` event is also created in `device_meta.py` to reflect the suspension of the pump.  
-- The bolus datatype is added to dfaker next. Many times of boluses can be generated. The decision making as to which bolus should be generated is randomized in the `bolus()` function in `bolus.py`.
+- The bolus datatype is added to dfaker next. Many types of boluses can be generated. The decision making as to which bolus should be generated is randomized in the `bolus()` function in `bolus.py`.
     + `normal_bolus` - bolus dosage given at the indicated `deviceTime`.
     + `sqaure_bolus` - bolus dose spread over indicated `duration`.
     + `dual_square_bolus` - partial dose called `normal` given at indicated `deviceTime` and the rest administered over `duration`.
