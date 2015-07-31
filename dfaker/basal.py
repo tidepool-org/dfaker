@@ -60,10 +60,13 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
         elif suspend_pump() and start_offset == end_offset:
             basal_entry["deliveryType"] = "suspend" 
             del basal_entry["rate"]
-            meta_entry, suspend_duration = device_meta_status(next_time, zonename)
-            basal_data.append(meta_entry)
+            #add device meta pump suspend and resume event
+            suspend_event, suspend_duration = device_meta_status('suspend', next_time, zonename)
+            resume_event = device_meta_status('resume', next_time + suspend_duration/1000, zonename)
+            basal_data.append(suspend_event)
+            basal_data.append(resume_event)
             basal_entry["duration"] = suspend_duration
-            pump_suspended.append([next_time, next_time + basal_entry["duration"]/1000]) #keep track of start/end times for suspension 
+            pump_suspended.append([next_time, next_time + basal_entry["duration"]/1000]) #track start/end times for suspension 
             next_time += basal_entry["duration"] / 1000 
         #update time to generate next basal
         else:
