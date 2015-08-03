@@ -1,12 +1,10 @@
 #Tidepool Dfaker 
 
-dfaker is a fake data generator that simulates diabetes data over time. 
+Dfaker is a command line tool that generates fake diabetes data. It is designed to fit Tidepool's data model description, creating data for any desired numbers of days. For a reference to the data model and the format specifications, [click here](http://developer.tidepool.io/data-model/v1/). Running dfaker will generate a JSON-formatted file. An example data file, ran with the default settings can be found [here](https://github.com/tidepool-org/dfaker/blob/master/device-data.json). For further reference about dfaker, read the developer documantation [here](https://github.com/tidepool-org/dfaker/blob/master/developer_documentation.md).
 
-**Note**, this project is under active development. 
+#Set Up
 
-#Set up
-
-dfaker runs with python3. In addition, using the Anaconda scientific Python distribution is recommended as the easiest way of getting all project dependencies. 
+Dfaker runs with python3. In addition, using the Anaconda scientific Python distribution is recommended as the easiest way of getting all project dependencies. 
 The anaconda installation for python3 can be [found here](http://continuum.io/downloads#py34).
 
 Alternatively, installing the following packages will work as well:
