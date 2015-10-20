@@ -30,22 +30,28 @@ class Test_Wizard(Chai):
         #check that the reccomendation of the wizard calculates correctly
         carb_ratio1 = res_dict[1]["insulinCarbRatio"] 
         carb_input1 = res_dict[1]["carbInput"] #should match carbs[0] = 90
+        units1 = res_dict[1]["units"]
         net_reccomendation1 = res_dict[1]["recommended"]["net"]
         expected_reccomendation1 = tools.round_to(carb_input1 / carb_ratio1)
         self.assertEqual(net_reccomendation1, expected_reccomendation1)
+        self.assertEqual(units1, "mmol/L")
 
         carb_ratio2 = res_dict[3]["insulinCarbRatio"] 
         carb_input2 = res_dict[3]["carbInput"] #should match carbs[0] = 90
+        units2 = res_dict[3]["units"]
         net_reccomendation2 = res_dict[3]["recommended"]["net"]
        
         expected_reccomendation2 = tools.round_to(carb_input2 / carb_ratio2)
         self.assertEqual(net_reccomendation2, expected_reccomendation2)
+        self.assertEqual(units2, "mmol/L")
 
         carb_ratio3 = res_dict[5]["insulinCarbRatio"] 
         carb_input3 = res_dict[5]["carbInput"] #should match carbs[0] = 90
+        units3 = res_dict[5]["units"]
         net_reccomendation3 = res_dict[5]["recommended"]["net"]
         expected_reccomendation3 = tools.round_to(carb_input3 / carb_ratio3)
         self.assertEqual(net_reccomendation3, expected_reccomendation3)
+        self.assertEqual(units3, "mmol/L")
 
     def test_wizard_format_with_iob(self):
         """ Test insulin on board calculations are taken into account when giving a wizard reccomendation"""

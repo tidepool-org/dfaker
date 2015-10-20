@@ -53,6 +53,7 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard, zonename, 
             wizard_reading["recommended"]["correction"] =  0
             wizard_reading["recommended"]["net"] = (wizard_reading["recommended"]["carb"] + wizard_reading["recommended"]["correction"]
                                                     - tools.round_to(wizard_reading["insulinOnBoard"]))
+            wizard_reading["units"] = "mmol/L"
             normal_or_square = random.randint(0, 9)
             if normal_or_square == 1 or normal_or_square == 2: #decide which type bolus to generate 
                 which_bolus = dual_square_bolus
