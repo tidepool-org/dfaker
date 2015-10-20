@@ -19,4 +19,5 @@ def add_common_fields(name, datatype, timestamp, zonename):
     datatype["deviceTime"] = (time.strftime('%Y-%m-%dT%H:%M:%S', 
                               time.gmtime(timestamp + datatype["timezoneOffset"]*60)))
     datatype["time"] = time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(timestamp))
+    datatype["conversionOffset"] = 0
     return datatype
