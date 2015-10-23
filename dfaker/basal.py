@@ -4,7 +4,7 @@ from pytz import timezone
 
 from . import common_fields 
 from .device_meta import suspend_pump, device_meta_status
-from . import settings
+from .pump_settings import make_pump_settings
 from . import tools
 
 def scheduled_basal(start_time, num_days, zonename, pump_name):
@@ -14,7 +14,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
         zonename -- name of timezone in effect
     """
     basal_data, pump_suspended = [], []  
-    access_settings = settings.settings(start_time, zonename=zonename, pump_name=pump_name)[0]
+    pump_settings = make_pump_settings(start_time, zonename=zonename, pump_name=pump_name)[0]
     offset = tools.get_offset(zonename, start_time)
     utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
     next_time = int(utc_time - offset*60)
@@ -27,7 +27,7 @@ def scheduled_basal(start_time, num_days, zonename, pump_name):
         basal_entry["scheduleName"] = "standard"
         
         #get basal schedule from settings
-        schedule = access_settings["basalSchedules"]["standard"] 
+        schedule = pump_settings["basalSchedules"]["standard"] 
         basal_entry["rate"], start, corrected_start, end = tools.get_rate_from_settings(schedule, basal_entry["deviceTime"] , "basalSchedules")
         duration = (end - start) / 1000 #in seconds
         zone = timezone(zonename)

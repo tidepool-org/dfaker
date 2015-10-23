@@ -4,7 +4,7 @@ import random
 import pytz
 
 from . import common_fields
-from . import settings
+from .pump_settings import make_pump_settings
 from . import tools
 
 def generate_boluses(solution, start_time, zonename, zone_offset):
@@ -79,12 +79,12 @@ def get_carb_ratio(start_time, curr_time, zonename, pump_name):
         curr_time -- a string representation of time in deviceTime format: YYYY-MM-DDTHH:MM:MS
         zonename -- ame of timezone in effect 
     """
-    access_settings = settings.settings(start_time, zonename, pump_name)[0]
+    pump_settings = make_pump_settings(start_time, zonename, pump_name)[0]
     if pump_name == 'Tandem':
-        carb_ratio_sched = access_settings["carbRatios"]["standard"]
+        carb_ratio_sched = pump_settings["carbRatios"]["standard"]
         carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
         return carb_ratio
-    carb_ratio_sched = access_settings["carbRatio"]
+    carb_ratio_sched = pump_settings["carbRatio"]
     carb_ratio = tools.get_rate_from_settings(carb_ratio_sched, curr_time, "carbRatio")
     return carb_ratio
 

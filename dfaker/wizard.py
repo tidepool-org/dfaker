@@ -4,7 +4,7 @@ from .bolus import (square_bolus, normal_bolus, dual_square_bolus,
                     check_bolus_time)
 from . import common_fields
 from . import insulin_on_board
-from . import settings
+from .pump_settings import make_pump_settings
 from . import tools
 
 
@@ -22,9 +22,9 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard,
         zonename -- name of timezone in effect
     """
     wizard_data = []
-    access_settings = settings.settings(start_time, zonename, pump_name)[0]
+    pump_settings = make_pump_settings(start_time, zonename, pump_name)[0]
     iob_dict = insulin_on_board.create_iob_dict(bolus_data,
-                                                access_settings["actionTime"])
+                                                pump_settings["actionTime"])
     for gluc_val, carb_val, timestamp in zip(gluc, carbs, timesteps):
         if check_bolus_time(timestamp, no_wizard):
             wizard_reading = {}
@@ -39,25 +39,25 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard,
 
             # pump specific input:
             if pump_name == 'Medtronic' or pump_name == 'OmniPod':
-                carb_ratio_sched = access_settings["carbRatio"]
-                sensitivity_sched = access_settings["insulinSensitivity"]
+                carb_ratio_sched = pump_settings["carbRatio"]
+                sensitivity_sched = pump_settings["insulinSensitivity"]
 
                 if pump_name == 'Medtronic':
                     wizard_reading["bgTarget"] = {
-                        "high": access_settings["bgTarget"][0]["high"],
-                        "low": access_settings["bgTarget"][0]["low"]
+                        "high": pump_settings["bgTarget"][0]["high"],
+                        "low": pump_settings["bgTarget"][0]["low"]
                     }
                 elif pump_name == 'OmniPod':
                     wizard_reading["bgTarget"] = {
-                        "high": access_settings["bgTarget"][0]["high"],
-                        "target": access_settings["bgTarget"][0]["target"]
+                        "high": pump_settings["bgTarget"][0]["high"],
+                        "target": pump_settings["bgTarget"][0]["target"]
                     }
             elif pump_name == 'Tandem':
-                target = access_settings["bgTargets"]["standard"][0]["target"]
+                target = pump_settings["bgTargets"]["standard"][0]["target"]
                 wizard_reading["bgTarget"] = {"target": target}
-                carb_ratio_sched = access_settings["carbRatios"]["standard"]
+                carb_ratio_sched = pump_settings["carbRatios"]["standard"]
                 sensitivity_sched = \
-                    access_settings["insulinSensitivities"]["standard"]
+                    pump_settings["insulinSensitivities"]["standard"]
 
             sensitivity = tools.get_rate_from_settings(
                               sensitivity_sched, wizard_reading["deviceTime"],
@@ -102,7 +102,7 @@ def wizard(start_time, gluc, carbs, timesteps, bolus_data, no_wizard,
 
             iob_dict = insulin_on_board.update_iob_dict(
                            iob_dict, [associated_bolus],
-                           access_settings["actionTime"])
+                           pump_settings["actionTime"])
             wizard_data.append(wizard_reading)
     return wizard_data, iob_dict
 
