@@ -3,7 +3,7 @@ import statsmodels.api as sm
 from . import common_fields
 from . import make_gaps
 from . import tools
-from .device_meta import device_meta_alarm
+from .device_event import make_alarm_event 
 
 def apply_loess(solution, num_days, gaps):
     """Solves the blood glucose equation over specified period of days 
@@ -47,7 +47,7 @@ def cbg(gluc, timesteps, zonename):
             cbg_reading["annotation"] = [{"code": "bg/out-of-range", "threshold": 40, "value": "low"}]
             cbg_reading["value"] = tools.convert_to_mmol(39)
             #add a device meta alarm for low insulin reading
-            meta_alarm = device_meta_alarm(timestamp, zonename)
+            meta_alarm = make_alarm_event(timestamp, zonename)
             cbg_data.append(meta_alarm)
         cbg_data.append(cbg_reading)
     return cbg_data
