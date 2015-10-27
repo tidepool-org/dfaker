@@ -27,15 +27,16 @@ class UploadManager(object):
         print(len(upload_data))
 
         index = 0
-        #for upload in upload_data[10:11]:
         for upload in upload_data:
             response = requests.post(url, headers=headers, json=upload)
-            response_data = response.json()
-            if response.status_code != 200:
+            if response.status_code == 200:
+                response_data = response.json()
+            else:
                 print(index)
                 print_formatted(upload)
                 print(response)
-                print_formatted(response_data)
+                print_formatted(response.text)
+                break
             index += 1
 
  
