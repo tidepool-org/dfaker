@@ -4,6 +4,8 @@ python:
   - "3.4"
 notifications:
   email: false
+services:
+  - docker
 
 # Setup anaconda
 before_install:
@@ -15,6 +17,8 @@ before_install:
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
+  - git clone https://github.com/anderspitman/tidepool-docker
+  - tidepool-docker/build_containers
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy pandas nose scipy six patsy python-dateutil statsmodels pytz
@@ -24,3 +28,5 @@ install:
 # Run test
 script:
   - "nosetests -v --rednose"
+  - python dfaker_cli -n 2
+  - python upload.py
