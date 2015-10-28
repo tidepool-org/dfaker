@@ -22,12 +22,12 @@ before_install:
   - tidepool-docker/start_containers tidepool-docker anderspitman
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy pandas nose scipy six patsy python-dateutil statsmodels pytz
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy pandas nose scipy six patsy python-dateutil statsmodels pytz pymongo requests
   - pip install chai
   - pip install rednose
 
 # Run test
 script:
   - "nosetests -v --rednose"
-  - python dfaker_cli -n 2
+  - python dfaker_cli.py -n 2
   - python upload.py
