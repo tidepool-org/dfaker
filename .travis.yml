@@ -29,5 +29,5 @@ install:
 # Run test
 script:
   - "nosetests -v --rednose"
-  - python dfaker_cli.py -n 2
+  - python dfaker_cli.py -n 2 -f upload_data.json
   - python upload.py
