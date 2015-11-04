@@ -4,7 +4,7 @@ from . import tools
 from . import bg_simulator
 from .bolus import bolus, generate_boluses
 from .wizard import wizard
-from .settings import settings
+from .pump_settings import make_pump_settings
 from .cbg import cbg, apply_loess
 from .smbg import smbg
 from .basal import scheduled_basal
@@ -25,18 +25,12 @@ def dfaker(num_days, zonename, date_time, gaps, smbg_freq, pump_name):
     b_carbs, b_carb_timesteps, w_carbs, w_carb_timesteps, w_gluc = (
             generate_boluses(solution, start_time, zonename=zonename, zone_offset=zone_offset))
 
-    #make settings 
-    settings_data = settings(start_time, zonename=zonename, pump_name=pump_name)
-    #make basal values
+    settings_data = make_pump_settings(start_time, zonename=zonename, pump_name=pump_name)
     basal_data, pump_suspended = scheduled_basal(start_time, num_days=num_days, zonename=zonename, pump_name=pump_name)
-    #make bolus values 
     bolus_data = bolus(start_time, b_carbs, b_carb_timesteps, no_bolus=pump_suspended, zonename=zonename, pump_name=pump_name)
-    #make wizard events
     wizard_data, iob_data = (wizard(start_time, w_gluc, w_carbs, w_carb_timesteps, bolus_data=bolus_data,
                          no_wizard=pump_suspended, zonename=zonename, pump_name=pump_name))
-    #make cbg values 
     cbg_data = cbg(cbg_gluc, cbg_timesteps, zonename=zonename)
-    #make smbg values 
     smbg_data = smbg(smbg_gluc, smbg_timesteps, stick_freq=smbg_freq, zonename=zonename)
 
     dfaker = dfaker + settings_data + basal_data + bolus_data + wizard_data + cbg_data + smbg_data

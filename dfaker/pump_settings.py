@@ -3,7 +3,7 @@ import random
 from . import common_fields
 from . import tools
 
-def settings(start_time, zonename, pump_name):
+def make_pump_settings(start_time, zonename, pump_name):
     """ Construct a settings object
         start_time -- a datetime object with a timezone
         zonename -- name of timezone in effect
@@ -13,7 +13,7 @@ def settings(start_time, zonename, pump_name):
     offset = tools.get_offset(zonename, start_time)
     utc_time = tools.convert_ISO_to_epoch(str(start_time), '%Y-%m-%d %H:%M:%S')
     time_in_seconds = int(utc_time - offset*60)
-    settings = common_fields.add_common_fields('settings', settings, time_in_seconds, zonename)
+    settings = common_fields.add_common_fields('pumpSettings', settings, time_in_seconds, zonename)
     settings["activeSchedule"] = "standard"
     settings["actionTime"] = random.randint(3,4) #3 or 4 hours for insulin to decay completely
     settings["basalSchedules"] =  {"standard": [{"rate": 0.9, "start": 0},
