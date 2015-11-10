@@ -2,8 +2,10 @@ import requests
 from pymongo import MongoClient
 import json
 
+
 def print_formatted(data):
     print(json.dumps(data, indent=4, sort_keys=True))
+
 
 class UploadManager(object):
     def __init__(self):
@@ -29,9 +31,7 @@ class UploadManager(object):
         index = 0
         for upload in upload_data:
             response = requests.post(url, headers=headers, json=upload)
-            if response.status_code == 200:
-                response_data = response.json()
-            else:
+            if response.status_code != 200:
                 print(index)
                 print_formatted(upload)
                 print(response)
@@ -39,7 +39,6 @@ class UploadManager(object):
                 break
             index += 1
 
- 
     def _clear_database(self):
         client = MongoClient('localhost', 27017)
         client.drop_database('user')

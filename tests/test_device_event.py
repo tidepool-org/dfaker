@@ -1,6 +1,6 @@
 from chai import Chai
 
-from dfaker.device_event import (make_time_change_event, make_alarm_event,
+from dfaker.device_event import (make_alarm_event,
                                  make_status_event)
 
 
@@ -17,14 +17,14 @@ class TestMakeStatusEvent(Chai):
         timestamp = 1
         zone_name = 'US/Pacific'
         status = 'suspend'
-        status_event = make_status_event(status, timestamp, zone_name) 
+        status_event = make_status_event(status, timestamp, zone_name)
         self.assert_equals(status_event['type'], 'deviceEvent')
 
     def test_suspend(self):
         timestamp = 1
         zone_name = 'US/Pacific'
         status = 'suspend'
-        event = make_status_event(status, timestamp, zone_name) 
+        event = make_status_event(status, timestamp, zone_name)
 
         self.assert_equals(event['type'], 'deviceEvent')
         self.assert_equals(event['subType'], 'status')
@@ -37,7 +37,7 @@ class TestMakeStatusEvent(Chai):
         timestamp = 1
         zone_name = 'US/Pacific'
         status = 'resume'
-        event = make_status_event(status, timestamp, zone_name) 
+        event = make_status_event(status, timestamp, zone_name)
         self.assert_equals(event['type'], 'deviceEvent')
         self.assert_equals(event['subType'], 'status')
         self.assert_equals(event['status'], 'resumed')
