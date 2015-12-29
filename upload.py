@@ -1,6 +1,7 @@
 import requests
 from pymongo import MongoClient
 import json
+import sys
 
 def print_formatted(data):
     print(json.dumps(data, indent=4, sort_keys=True))
@@ -36,7 +37,7 @@ class UploadManager(object):
                 print_formatted(upload)
                 print(response)
                 print_formatted(response.text)
-                break
+                sys.exit(1)
             index += 1
 
  
